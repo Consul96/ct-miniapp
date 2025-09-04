@@ -259,16 +259,19 @@ function recalc(){
   const labor = estimateLaborRub();
   const withLabor = visibleSumRub + labor;
   const marginAmt = withLabor * state.margin;
-  const net = withLabor + marginAmt;     // сумма без НДС
-  const vat = net * state.vat;
-  const gross = net + vat;               // итог к оплате
+  const net  = withLabor + marginAmt;     // сумма без НДС
+  const vat  = net * state.vat;           // НДС
+  const gross = net + vat;                // итог к оплате
 
-  document.getElementById('sumNet').textContent = fmt(net);
-  document.getElementById('sumVat').textContent = fmt(vat);
-  document.getElementById('sumGross').textContent = fmt(gross);
+  // 🔹 сохраняем детализированные суммы в state — потом заберём в payload
+  state._totals = { net, vat, gross, visibleSumRub, labor, withLabor, marginAmt };
+
+  document.getElementById('sumNet').textContent  = fmt(net);
+  document.getElementById('sumVat').textContent  = fmt(vat);
+  document.getElementById('sumGross').textContent= fmt(gross);
 
   document.getElementById('grandTotal').textContent = fmt(gross);
-  document.getElementById('grandTax').textContent = `в т.ч. Налог ${fmt(vat)}`;
+  document.getElementById('grandTax').textContent   = `в т.ч. Налог ${fmt(vat)}`;
 }
 
 function bindGlobals(){
@@ -297,14 +300,12 @@ function hydrateTelegram(){
     document.body.style.background = tg.themeParams.bg_color || getComputedStyle(document.documentElement).getPropertyValue('--bg');
     // MainButton
     tg.MainButton.setText('Отправить расчёт');
-    tg.MainButton.onClick(()=>{
+    tg.MainButton.onClick(() => {
       const payload = {
         kmQty: state.kmQty,
-        items: state.items,
-        totals: {
-          currency: state.currency, usd: state.usd, vat: state.vat, margin: state.margin,
-          // передадим уже посчитанные суммы в RUB
-        }
+        items: state.items.filter(x => x.qty > 0),
+        settings: { currency: state.currency, usd: state.usd, vat_rate: state.vat, margin: state.margin },
+        totals_rub: state._totals   // { net, vat, gross } в RUB
       };
       tg.sendData(JSON.stringify(payload));
     });
