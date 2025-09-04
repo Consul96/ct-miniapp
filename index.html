@@ -301,14 +301,42 @@ function hydrateTelegram(){
     // MainButton
     tg.MainButton.setText('Отправить расчёт');
     tg.MainButton.onClick(() => {
-      const payload = {
-        kmQty: state.kmQty,
-        items: state.items.filter(x => x.qty > 0),
-        settings: { currency: state.currency, usd: state.usd, vat_rate: state.vat, margin: state.margin },
-        totals_rub: state._totals   // { net, vat, gross } в RUB
-      };
-      tg.sendData(JSON.stringify(payload));
-    });
+  // посчитаем на всякий (если пользователь не трогал поля)
+  recalc();
+
+  // суммы по строкам (полезно для последующей печати/счёта)
+  const itemsDetailed = state.items.map(it => {
+    const amount = (it.type === 'per_unit')
+      ? (it.price * it.qty)
+      : (it.price * Math.min(1, it.qty));
+    return {
+      id: it.id,
+      unit: it.unit,
+      type: it.type,
+      price: it.price,
+      qty: it.qty,
+      amount
+    };
+  });
+
+  const payload = {
+    kmQty: state.kmQty,
+    currency: state.currency,
+    usd: state.usd,
+    vat_rate: state.vat,
+    margin_rate: state.margin,
+
+    // детальные строки
+    items: itemsDetailed,
+
+    // 🔹 итоговые суммы из state._totals (в RUB)
+    totals: {
+      ...state._totals
+    }
+  };
+
+  tg.sendData(JSON.stringify(payload));
+});
     tg.MainButton.show();
   }catch(e){/* noop */}
 }
