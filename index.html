@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Калькулятор услуг маркировки — Mini App</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root{
+      --bg:#0f172a0d; /* slate-900/5 */
+      --card:#fff; --text:#0f172a; --muted:#475569; --line:#e2e8f0;
+      --blue:#2563eb; --blue-weak:#eff6ff; --ok:#16a34a; --danger:#ef4444;
+    }
+    html,body{margin:0;padding:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);} 
+    .container{max-width:1200px;margin:24px auto;padding:0 16px;}
+    .card{background:var(--card);border-radius:16px;box-shadow:0 10px 30px rgba(2,6,23,.08);overflow:hidden;border:1px solid var(--line)}
+    .card-hd{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--line);}
+    .hd-title{font-weight:700;display:flex;gap:10px;align-items:center}
+    .hd-title svg{width:20px;height:20px;color:var(--blue)}
+    .hd-total{font-weight:800;font-size:18px}
+    .hd-sub{font-size:12px;color:var(--muted)}
+
+    table{width:100%;border-collapse:collapse}
+    thead th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding:10px 14px;background:var(--blue-weak);text-align:left;border-bottom:1px solid var(--line)}
+    tbody td{padding:14px;border-bottom:1px solid var(--line);vertical-align:middle}
+    tbody tr:hover{background:#f8fafc}
+    .srv-name{display:flex;gap:8px;align-items:center}
+    .hint{color:var(--muted);font-size:12px}
+    input[type="number"]{width:100%;max-width:120px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;background:#fff;}
+    input[disabled]{background:#f1f5f9;color:#94a3b8}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:#f1f5f9;color:#334155;font-size:12px;border:1px solid var(--line)}
+
+    .footer{display:grid;grid-template-columns: 1fr minmax(240px,340px);gap:16px;padding:16px}
+    .foot-card{background:#f8fafc;border-radius:12px;padding:14px 16px;border:1px solid var(--line)}
+    .row{display:flex;justify-content:space-between;align-items:center;padding:8px 0}
+    .row .label{color:var(--muted)}
+    .row.total{background:var(--blue);color:#fff;border-radius:10px;padding:14px 16px;font-weight:800}
+    .mini{font-size:12px;color:var(--muted)}
+
+    .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+    .toggle{display:flex;align-items:center;gap:8px}
+    .switch{position:relative;width:38px;height:22px;background:#cbd5e1;border-radius:999px;cursor:pointer;transition:.2s}
+    .switch::after{content:"";position:absolute;width:18px;height:18px;top:2px;left:2px;background:#fff;border-radius:50%;transition:.2s}
+    .switch.on{background:#93c5fd}
+    .switch.on::after{left:18px}
+
+    @media (max-width:760px){
+      .hd-total{font-size:16px}
+      .hide-sm{display:none}
+      input[type="number"]{max-width:100px}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card" id="card">
+      <div class="card-hd">
+        <div class="hd-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"/></svg>
+          <div>
+            Получение маркировки
+            <div class="mini" id="currencyNote"></div>
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div class="hd-total" id="grandTotal">0</div>
+          <div class="hd-sub" id="grandTax">в т.ч. Налог 0</div>
+        </div>
+      </div>
+
+      <div style="padding:14px 16px 0;">
+        <div class="controls">
+          <span class="chip">Ставка НДС: <b id="vatLabel">20%</b></span>
+          <span class="chip">Маржа: <b id="marginLabel">15%</b></span>
+          <span class="chip">Курс USD: <input type="number" step="0.0001" id="rateUsd" style="width:82px"/></span>
+          <span class="chip">Валюта: 
+            <select id="currencySel">
+              <option value="RUB">RUB</option>
+              <option value="USD" selected>USD</option>
+            </select>
+          </span>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Наименование</th>
+            <th class="hide-sm">Стоимость</th>
+            <th>Количество</th>
+            <th class="hide-sm">Ед. измерения</th>
+            <th>Сумма</th>
+            <th class="hide-sm">Налог</th>
+            <th class="hide-sm">Итого</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+
+      <div class="footer">
+        <div></div>
+        <div class="foot-card">
+          <div class="row"><div class="label">Сумма без НДС</div><div id="sumNet">0</div></div>
+          <div class="row"><div class="label">НДС</div><div id="sumVat">0</div></div>
+          <div class="row total"><div>ИТОГО LABELING:</div><div id="sumGross">0</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+// === ПАРАМЕТРЫ/КОНСТАНТЫ — синхронизированы с Python ===
+const PRICE_KM   = 0.60;   // ₽/шт
+const PRICE_APPL = 6.0;    // ₽/шт
+const PRICE_PRINT= 2.5;    // ₽/шт
+const PRICE_PACK = 1.5;    // ₽/шт
+const PRICE_TPL  = 2000.0; // ₽ фикс
+const PRICE_NKT  = 2.0;    // ₽/шт
+const PRICE_REG  = 15000.0;// ₽ фикс
+
+const PDF_TIERS = [
+  {min:10000, rate:12.0},
+  {min:5000,  rate:15.0},
+  {min:2000,  rate:18.0},
+  {min:1000,  rate:20.0}, // при 1000 — 20 ₽/шт
+  {min:500,   rate:25.0},
+  {min:0,     rate:30.0}
+];
+
+// "внутренние" — не показываем, но учитываем в расчёте общего итога
+const DEFAULT_VAT = 0.20; // 20%
+const DEFAULT_MARGIN = 0.15; // 15%
+
+// Трудозатраты из Python-профиля
+const MONTHLY_SALARY = 120000.0; // можно подтягивать из API
+const OVERHEAD = 1.30; const HOURS_PER_MONTH = 168.0; const UTIL = 0.85;
+const BASE_H = 0.5, PER_1000_KM_H=0.6, APPL_H=0.8, PRINT_H=0.4, PACK_H=0.3, TPL_H=0.4, REG_H=0.6, PDF_H=0.0;
+
+function hourlyRate(){return (MONTHLY_SALARY*OVERHEAD)/(HOURS_PER_MONTH*Math.max(0.1,UTIL));}
+function pdfRate(qty){ for(const t of PDF_TIERS){ if(qty>=t.min) return t.rate; } return PDF_TIERS.at(-1).rate; }
+
+// Служебные форматтеры
+const nfRUB = new Intl.NumberFormat('ru-RU',{style:'currency', currency:'RUB', maximumFractionDigits:2});
+const nfUSD = new Intl.NumberFormat('en-US',{style:'currency', currency:'USD', maximumFractionDigits:2});
+function fmt(amountRub){ const cur = state.currency; const rub = Number(amountRub)||0; return cur==='USD' ? nfUSD.format(rub/state.usd) : nfRUB.format(rub); }
+
+// Состояние таблицы
+const state = {
+  currency: 'USD',
+  usd: 95.00, // курс руб→usd
+  vat: DEFAULT_VAT,
+  margin: DEFAULT_MARGIN,
+  kmQty: 0,
+  items: []
+};
+
+const defs = [
+  { id:'get_km',      name:'Получение КМ в ЧЗ',            unit:'шт',    type:'per_unit', price:()=>PRICE_KM, qty:'kmQty', editable:false },
+  { id:'pdf_labels',  name:'Формирование КИЗ c PDF',       unit:'этикетки PDF', type:'per_unit', price:()=>pdfRate(state.kmQty), qty:'kmQty', editable:false },
+  { id:'apply',       name:'Нанесение',                    unit:'шт',    type:'per_unit', price:()=>PRICE_APPL },
+  { id:'print',       name:'Печать',                       unit:'шт',    type:'per_unit', price:()=>PRICE_PRINT },
+  { id:'pack',        name:'Пакетирование',                unit:'шт',    type:'per_unit', price:()=>PRICE_PACK },
+  { id:'tpl',         name:'Создание шаблона этикеток',    unit:'шаблоны этикеток', type:'fixed',    price:()=>PRICE_TPL },
+  { id:'nkt',         name:'Карточки в НКТ',               unit:'карточки',        type:'per_unit', price:()=>PRICE_NKT },
+  { id:'reg',         name:'Регистрация в ЧЗ/GS1 РУС',     unit:'регистрация',     type:'fixed',    price:()=>PRICE_REG },
+];
+
+function buildRows(){
+  const tbody = document.getElementById('rows');
+  tbody.innerHTML='';
+
+  for(const d of defs){
+    const tr = document.createElement('tr');
+    tr.dataset.id = d.id;
+
+    const tdName = document.createElement('td');
+    tdName.innerHTML = `<div class="srv-name">${d.name}</div>`;
+
+    const tdPrice = document.createElement('td'); tdPrice.className='hide-sm';
+    tdPrice.innerHTML = `<span class="hint" data-price></span>`;
+
+    const tdQty = document.createElement('td');
+    const inp = document.createElement('input'); inp.type='number'; inp.min='0'; inp.step='1';
+    inp.value = (d.id==='reg'||d.id==='tpl')?0:0;
+    if(d.qty==='kmQty'){ inp.value = state.kmQty; }
+    if(d.editable===false && d.qty!=='kmQty') inp.placeholder='0';
+    inp.addEventListener('input', ()=>{ onQtyChange(d, inp.value) });
+    tdQty.appendChild(inp);
+
+    const tdUnit = document.createElement('td'); tdUnit.className='hide-sm'; tdUnit.textContent = d.unit || '';
+
+    const tdSum = document.createElement('td'); tdSum.innerHTML = `<b data-sum>0</b>`;
+    const tdVat = document.createElement('td'); tdVat.className='hide-sm'; tdVat.innerHTML = `<span data-vat>0</span>`;
+    const tdTot = document.createElement('td'); tdTot.className='hide-sm'; tdTot.innerHTML = `<span data-total>0</span>`;
+
+    tr.append(tdName, tdPrice, tdQty, tdUnit, tdSum, tdVat, tdTot);
+    tbody.appendChild(tr);
+  }
+}
+
+function onQtyChange(def, val){
+  const n = Math.max(0, parseInt(val||'0',10));
+  if(def.qty==='kmQty') state.kmQty = n;
+  state.items = defs.map(d=>({
+    id:d.id, type:d.type, unit:d.unit,
+    price:d.price(),
+    qty: (d.qty==='kmQty')? state.kmQty : (d.id===def.id? n : currentQty(d.id))
+  }));
+  recalc();
+}
+
+function currentQty(id){
+  const tr = document.querySelector(`tr[data-id="${id}"]`);
+  if(!tr) return 0; const inp = tr.querySelector('input');
+  return Math.max(0, parseInt(inp.value||'0',10));
+}
+
+function updatePriceCells(){
+  for(const d of defs){
+    const tr = document.querySelector(`tr[data-id="${d.id}"]`);
+    if(!tr) continue;
+    const p = d.price();
+    const pcs = tr.querySelector('[data-price]');
+    pcs.textContent = d.type==='per_unit' ? `${fmt(p)} / шт` : fmt(p);
+  }
+}
+
+function estimateLaborRub(){
+  const k = state.kmQty/1000.0; let h = BASE_H + PER_1000_KM_H*k;
+  if(currentQty('apply')>0) h += APPL_H*k;
+  if(currentQty('print')>0) h += PRINT_H*k;
+  if(currentQty('pack')>0)  h += PACK_H*k;
+  if(currentQty('tpl')>0)   h += TPL_H;
+  if(currentQty('reg')>0)   h += REG_H;
+  if(currentQty('pdf_labels')>0 && PDF_H>0) h += PDF_H*k;
+  return h*hourlyRate();
+}
+
+function recalc(){
+  // собрать текущие items
+  state.items = defs.map(d=>({ id:d.id, type:d.type, unit:d.unit, price:d.price(), qty: (d.qty==='kmQty')? state.kmQty : currentQty(d.id) }));
+  updatePriceCells();
+
+  let visibleSumRub = 0;
+  for(const it of state.items){
+    const amount = (it.type==='per_unit') ? (it.price * it.qty) : (it.price * Math.min(1, it.qty));
+    visibleSumRub += amount;
+
+    const tr = document.querySelector(`tr[data-id="${it.id}"]`);
+    if(!tr) continue;
+    const vat = amount * state.vat;
+    const tot = amount + vat;
+    tr.querySelector('[data-sum]').textContent   = fmt(amount);
+    tr.querySelector('[data-vat]').textContent   = fmt(vat);
+    tr.querySelector('[data-total]').textContent = fmt(tot);
+  }
+
+  // скрытые блоки
+  const labor = estimateLaborRub();
+  const withLabor = visibleSumRub + labor;
+  const marginAmt = withLabor * state.margin;
+  const net = withLabor + marginAmt;     // сумма без НДС
+  const vat = net * state.vat;
+  const gross = net + vat;               // итог к оплате
+
+  document.getElementById('sumNet').textContent = fmt(net);
+  document.getElementById('sumVat').textContent = fmt(vat);
+  document.getElementById('sumGross').textContent = fmt(gross);
+
+  document.getElementById('grandTotal').textContent = fmt(gross);
+  document.getElementById('grandTax').textContent = `в т.ч. Налог ${fmt(vat)}`;
+}
+
+function bindGlobals(){
+  const vatLabel = document.getElementById('vatLabel');
+  const marginLabel = document.getElementById('marginLabel');
+  const rateUsd = document.getElementById('rateUsd');
+  const currencySel = document.getElementById('currencySel');
+  const currencyNote = document.getElementById('currencyNote');
+
+  // начальные значения
+  state.kmQty = 0; state.currency='USD';
+  rateUsd.value = state.usd.toFixed(2);
+  vatLabel.textContent = `${Math.round(state.vat*100)}%`;
+  marginLabel.textContent = `${Math.round(state.margin*100)}%`;
+  currencyNote.textContent = 'Отображение сумм: переключаемая валюта (по умолчанию USD)';
+
+  rateUsd.addEventListener('input', ()=>{ const v = parseFloat(rateUsd.value||'0'); if(v>0){ state.usd = v; recalc(); }});
+  currencySel.addEventListener('change', ()=>{ state.currency = currencySel.value; recalc(); });
+}
+
+function hydrateTelegram(){
+  try{
+    const tg = window.Telegram?.WebApp; if(!tg) return;
+    tg.ready();
+    // адаптация темы
+    document.body.style.background = tg.themeParams.bg_color || getComputedStyle(document.documentElement).getPropertyValue('--bg');
+    // MainButton
+    tg.MainButton.setText('Отправить расчёт');
+    tg.MainButton.onClick(()=>{
+      const payload = {
+        kmQty: state.kmQty,
+        items: state.items,
+        totals: {
+          currency: state.currency, usd: state.usd, vat: state.vat, margin: state.margin,
+          // передадим уже посчитанные суммы в RUB
+        }
+      };
+      tg.sendData(JSON.stringify(payload));
+    });
+    tg.MainButton.show();
+  }catch(e){/* noop */}
+}
+
+// init
+buildRows();
+bindGlobals();
+recalc();
+hydrateTelegram();
+</script>
+</body>
+</html>
