@@ -4,9 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CT Mentor — Авторизация</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-  :root{--bg:#F3F4F6;--card:#fff;--line:#E2E8F0;--text:#0F172A;--muted:#475569;--accent:#F97316;
-        --r:16px;--shadow:0 12px 40px rgba(2,6,23,.10);--font:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
+  :root{
+    --bg:#F3F4F6;--card:#fff;--line:#E2E8F0;--text:#0F172A;--muted:#475569;--accent:#F97316;
+    --r:16px;--shadow:0 12px 40px rgba(2,6,23,.10);--font:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif
+  }
+  [data-theme="dark"]{
+    --bg:#0B1220;--card:#0F172A;--line:#1F2937;--text:#E5E7EB;--muted:#9CA3AF;
+    --shadow:0 12px 40px rgba(0,0,0,.35)
+  }
   html,body{margin:0;height:100%;background:var(--bg);font-family:var(--font);color:var(--text)}
   .wrap{min-height:100dvh;display:grid;place-items:center;padding:24px}
   .card{width:min(420px,92vw);background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:28px}
@@ -14,33 +21,111 @@
   p{margin:0 0 18px 0;color:var(--muted)}
   .field{margin-bottom:12px}
   .label{font-size:13px;color:var(--muted);margin-bottom:6px}
-  .input{width:100%;height:42px;border:1px solid var(--line);border-radius:12px;padding:0 12px;font-size:15px}
-  .btn{width:100%;height:44px;margin-top:14px;border:none;border-radius:12px;background:var(--accent);color:#fff;font-weight:700;cursor:pointer}
-  .footer{margin-top:16px;font-size:13px;color:var(--muted);text-align:center}
+  .input{width:100%;height:44px;border:1px solid var(--line);border-radius:12px;padding:0 12px;font-size:15px;
+         background:var(--card);color:var(--text)}
+  .row{display:flex;gap:10px;align-items:center;margin-top:8px}
+  .btn{width:100%;height:46px;margin-top:14px;border:none;border-radius:12px;background:var(--accent);
+       color:#fff;font-weight:700;cursor:pointer}
+  .btn[disabled]{opacity:.6;cursor:not-allowed}
+  .help{margin-top:12px;font-size:12px;color:var(--muted);text-align:center}
+  .help a{color:inherit}
+  .error{color:#DC2626;font-size:12px;margin-top:6px;display:none}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="card">
     <h1>Вход в CT Mentor</h1>
-    <p>Укажите e-mail для отправки PDF расчёта.</p>
+    <p>Укажите e-mail для отправки PDF-расчёта.</p>
 
     <div class="field">
       <div class="label">E-mail</div>
-      <input id="email" class="input" type="email" placeholder="name@company.ru" autocomplete="email">
+      <input id="email" class="input" type="email" inputmode="email" autocomplete="email"
+             autocapitalize="off" spellcheck="false" placeholder="name@company.ru">
+      <div id="err" class="error">Введите корректный e-mail.</div>
     </div>
 
-    <button class="btn" id="go">Войти</button>
-    <div class="footer">© Cargo Trans</div>
+    <label class="row" style="user-select:none">
+      <input id="consent" type="checkbox" checked>
+      <span style="font-size:13px;color:var(--muted)">
+        Я согласен на обработку персональных данных и получение расчётов на указанный e-mail
+      </span>
+    </label>
+
+    <button class="btn" id="go">
+      <span id="goText">Войти</span>
+      <span id="spin" style="display:none">⏳</span>
+    </button>
+
+    <div class="help">
+      <a href="#" id="logout" hidden>Сменить e-mail</a> •
+      <a href="https://t.me/OM_Cargo_Bot" target="_blank">Написать в поддержку</a><br>
+      <a href="https://consul96.github.io/privacypolicy.html" target="_blank">Политика конфиденциальности</a>
+    </div>
   </div>
 </div>
+
 <script>
-  const EMAIL_RE=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
-  document.getElementById('go').onclick=()=>{
-    const email=(document.getElementById('email').value||'').trim();
-    if(!EMAIL_RE.test(email)){ alert('Введите корректный e-mail'); return; }
-    localStorage.setItem('ctm_email', email);
-    location.href='./index.html';
+  // Тема из Telegram
+  const scheme = (window.Telegram?.WebApp?.colorScheme || 'light');
+  document.documentElement.setAttribute('data-theme', scheme === 'dark' ? 'dark' : 'light');
+  window.Telegram?.WebApp?.expand?.();
+
+  // Prefill e-mail из localStorage
+  const EMAIL_KEY = 'ctm_email';
+  const emailEl = document.getElementById('email');
+  const logoutEl = document.getElementById('logout');
+  const errEl = document.getElementById('err');
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+
+  const saved = (localStorage.getItem(EMAIL_KEY) || '').trim();
+  if (saved) {
+    emailEl.value = saved;
+    logoutEl.hidden = false;
+  }
+  emailEl.focus();
+
+  // Enter для сабмита
+  emailEl.addEventListener('keydown', (e)=>{
+    if (e.key === 'Enter') document.getElementById('go').click();
+  });
+
+  // Смена e-mail
+  logoutEl.onclick = (e)=>{
+    e.preventDefault();
+    localStorage.removeItem(EMAIL_KEY);
+    emailEl.value = '';
+    logoutEl.hidden = true;
+    emailEl.focus();
+  };
+
+  // Сабмит
+  document.getElementById('go').onclick = ()=>{
+    const raw = (emailEl.value||'').trim().toLowerCase();
+    const consent = document.getElementById('consent').checked;
+
+    errEl.style.display = 'none';
+    if (!EMAIL_RE.test(raw)) { errEl.style.display='block'; return; }
+    if (!consent) { alert('Нужно согласие на обработку данных.'); return; }
+
+    // Сохраняем
+    localStorage.setItem(EMAIL_KEY, raw);
+
+    // Пробрасываем initData для верификации на стороне бота
+    const initData = window.Telegram?.WebApp?.initData || '';
+    const url = new URL('./index.html', location.href);
+    url.searchParams.set('v','2');                 // анти-кэш
+    url.searchParams.set('from','auth');
+    if (initData) url.searchParams.set('tg', '1'); // флажок, что мы в WebApp
+
+    // Небольшой лоадер
+    const btn = document.getElementById('go');
+    document.getElementById('goText').style.display='none';
+    document.getElementById('spin').style.display='';
+    btn.setAttribute('disabled','disabled');
+
+    // Переход в калькулятор
+    location.href = url.toString();
   };
 </script>
 </body>
