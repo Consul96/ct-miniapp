@@ -23,15 +23,10 @@
 <div class="wrap">
   <div class="card">
     <h1>Вход в CT Mentor</h1>
-    <p>Введите код доступа и e-mail для счетов.</p>
+    <p>Укажите e-mail для отправки PDF расчёта.</p>
 
     <div class="field">
-      <div class="label">Код доступа</div>
-      <input id="pass" class="input" type="password" placeholder="Код доступа">
-    </div>
-
-    <div class="field">
-      <div class="label">E-mail для отправки PDF расчёта</div>
+      <div class="label">E-mail</div>
       <input id="email" class="input" type="email" placeholder="name@company.ru" autocomplete="email">
     </div>
 
@@ -40,20 +35,12 @@
   </div>
 </div>
 <script>
-  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
-  document.getElementById('go').onclick = ()=>{
-    const pass = document.getElementById('pass').value.trim();
-    const email = document.getElementById('email').value.trim();
-
-    if(!pass){ alert('Введите код доступа'); return; }
+  const EMAIL_RE=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+  document.getElementById('go').onclick=()=>{
+    const email=(document.getElementById('email').value||'').trim();
     if(!EMAIL_RE.test(email)){ alert('Введите корректный e-mail'); return; }
-
-    // сохраняем «сессию»
-    localStorage.setItem('ctm_token', pass);
     localStorage.setItem('ctm_email', email);
-
-    // переход в калькулятор
-    location.href = './index.html';
+    location.href='./index.html';
   };
 </script>
 </body>
