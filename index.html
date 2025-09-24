@@ -6,40 +6,36 @@
   <title>Калькулятор услуг маркировки — Mini App</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    /* ================= TOKENS ================= */
+    /* ===== TOKENS ===== */
     :root{
-      /* цвета */
       --bg:#F3F4F6;
-      --card:#FFFFFF;          /* #FFF в Figma */
-      --line:#E2E8F0;          /* бордер карточки и строк */
+      --card:#FFFFFF;
+      --line:#E2E8F0;
       --text:#0F172A;
       --muted:#475569;
-      --accent:#FF7A00;        /* твой оранжевый */
-      --accent-500:#F97316;    /* яркий оранжевый для кнопок/инпутов */
-      --accent-weak:#FFF7ED;   /* фон шапки таблицы/чипов */
+      --accent:#FF7A00;        /* фирменный */
+      --accent-500:#F97316;    /* кнопки/инпуты */
+      --accent-weak:#FFF7ED;   /* фон шапки таблицы */
 
-      /* типографика */
       --font:Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       --fs-12:12px; --fs-14:14px; --fs-16:16px; --fs-18:18px;
 
-      /* радиусы/тени/отступы */
       --r-sm:10px; --r-md:12px; --r-lg:16px;
       --shadow-card:0 10px 30px rgba(2,6,23,.08);
-      --space-8:8px; --space-12:12px; --space-16:16px; --space-20:20px;
 
-      /* НДС по умолчанию */
       --vat:0.20;
     }
 
-    /* =============== BASE =============== */
+    /* ===== BASE ===== */
     html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--font)}
-    .wrap{min-height:100dvh;display:flex;justify-content:center;padding:24px}
+    .wrap{min-height:100dvh;display:flex;justify-content:center;padding:clamp(12px,2.5vw,24px)}
     .container{
-      width:1200px; background:var(--card); border:1px solid var(--line);
+      width:clamp(320px,96vw,1200px);
+      background:var(--card); border:1px solid var(--line);
       border-radius:var(--r-lg); box-shadow:var(--shadow-card); overflow:hidden;
     }
 
-    /* =============== HEADER =============== */
+    /* ===== HEADER ===== */
     .header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line)}
     .h-left h1{margin:0;font-size:var(--fs-18)}
     .h-left small{display:block;margin-top:4px;color:var(--muted);font-size:var(--fs-12)}
@@ -49,17 +45,18 @@
     }
     .btn:active{transform:translateY(1px)}
 
-    /* =============== CHIP BAR =============== */
+    /* ===== CHIP BAR ===== */
     .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:12px 20px;border-bottom:1px solid var(--line);background:#fff}
     .chip{
       display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:20px;
       background:var(--accent-weak);border:1px solid var(--line);font-size:var(--fs-12);font-weight:600
     }
-    .toolbar .right{margin-left:auto;display:flex;gap:8px;align-items:center;font-size:var(--fs-12);color:var(--muted)}
+    .toolbar .right{margin-left:auto;display:flex;gap:8px;align-items:center}
     .link{color:var(--muted);text-decoration:underline;cursor:pointer}
 
-    /* =============== TABLE =============== */
-    .table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:var(--fs-14)}
+    /* ===== TABLE ===== */
+    .table-wrap{overflow-x:auto}
+    .table{min-width:860px;width:100%;border-collapse:collapse;table-layout:fixed;font-size:var(--fs-14)}
     .table thead th{
       background:var(--accent-weak); color:var(--muted); text-transform:uppercase; letter-spacing:.02em;
       padding:12px 14px; text-align:left; font-size:var(--fs-12); border-bottom:1px solid var(--line)
@@ -73,7 +70,7 @@
     }
     .input:focus{outline:none;box-shadow:0 0 0 3px rgba(249,115,22,.15)}
 
-    /* =============== TOTALS =============== */
+    /* ===== TOTALS ===== */
     .totals{padding:16px 20px 24px;display:flex;justify-content:flex-end}
     .totals-col{width:320px;display:grid;gap:8px}
     .badge{
@@ -82,6 +79,19 @@
     }
     .badge span{opacity:.92;font-weight:600}
     .muted{color:var(--muted)}
+
+    /* ===== MOBILE ===== */
+    @media (max-width:900px){
+      .header{padding:12px 14px}
+      .toolbar{padding:10px 14px}
+      .table thead th,.table tbody td{padding:10px 12px}
+      .btn{padding:9px 12px}
+    }
+    @media (max-width:600px){
+      .h-left h1{font-size:16px}
+      .totals{justify-content:stretch}
+      .totals-col{width:100%}
+    }
   </style>
 </head>
 <body>
@@ -100,31 +110,35 @@
       <div class="toolbar">
         <div class="chip">Ставка НДС: <strong id="chipVat">20%</strong></div>
         <div class="chip">Валюта: <strong>RUB</strong></div>
+
         <div class="right">
-          <span id="rates">Курсы ЦБ РФ: USD 81.56 • EUR 95.48 • CNY 11.39 от 06.09.2025</span>
-          <span class="chip" style="background:#fff">Обновить</span>
+          <input id="email" type="email" placeholder="email для счёта"
+                 class="input" style="width:220px;height:34px">
+          <span class="chip" id="btnRefresh" style="background:#fff">Обновить</span>
         </div>
       </div>
 
       <!-- Table -->
-      <table class="table" id="priceTable">
-        <colgroup>
-          <col class="col-name"><col class="col-price"><col class="col-qty">
-          <col class="col-unit"><col class="col-sum"><col class="col-vat"><col class="col-total">
-        </colgroup>
-        <thead>
-          <tr>
-            <th>Наименование</th>
-            <th>Стоимость</th>
-            <th>Количество</th>
-            <th>Ед. измерения</th>
-            <th>Сумма</th>
-            <th>Налог</th>
-            <th>Итого</th>
-          </tr>
-        </thead>
-        <tbody><!-- будет заполнено JS --></tbody>
-      </table>
+      <div class="table-wrap">
+        <table class="table" id="priceTable">
+          <colgroup>
+            <col class="col-name"><col class="col-price"><col class="col-qty">
+            <col class="col-unit"><col class="col-sum"><col class="col-vat"><col class="col-total">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>Наименование</th>
+              <th>Стоимость</th>
+              <th>Количество</th>
+              <th>Ед. измерения</th>
+              <th>Сумма</th>
+              <th>Налог</th>
+              <th>Итого</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
 
       <!-- Totals -->
       <div class="totals">
@@ -138,13 +152,9 @@
   </div>
 
   <script>
-    /* ====== ЛОГИКА ====== */
     const VAT = 0.20;
-
-    // ступени для PDF с КМ
     const pdfRate = q => q>=10000?12 : q>=5000?15 : q>=2000?18 : q>=1000?20 : q>=500?25 : 30;
 
-    // строки как в макете
     const rows = [
       { key:'gtin_km', title:'Получение GTIN и КМ (контракт агента)', unit:'шт', price:0.60 },
       { key:'pdf',     title:'Формирование PDF с КМ (если контракт агента — бесплатно)', unit:'шт', priceFn:q=>pdfRate(q) },
@@ -158,7 +168,6 @@
 
     const tbody = document.querySelector('#priceTable tbody');
     const money = n => (n||0).toLocaleString('ru-RU',{style:'currency',currency:'RUB',maximumFractionDigits:2});
-    const num = n => (n||0).toLocaleString('ru-RU',{minimumFractionDigits:1,maximumFractionDigits:1});
 
     function draw(){
       tbody.innerHTML='';
@@ -166,8 +175,7 @@
         const tr = document.createElement('tr');
 
         const qty = document.createElement('input');
-        qty.className='input';
-        qty.type='number'; qty.min='0'; qty.value=r.qty||0;
+        qty.className='input'; qty.type='number'; qty.min='0'; qty.value=r.qty||0;
         qty.oninput = ()=>{ r.qty=+qty.value; redrawRow(tr,r); recalc(); };
 
         function redrawRow(el,row){
@@ -177,7 +185,7 @@
 
           el.innerHTML = `
             <td>${row.title}</td>
-            <td>${price? money(price) + (row.fixed?'':' / шт'): '—'}</td>
+            <td>${price? money(price) + (row.fixed?'':' / шт') : '—'}</td>
             <td></td>
             <td>${row.unit}</td>
             <td>${money(rowSum)}</td>
@@ -204,15 +212,38 @@
       document.getElementById('sumTotal').textContent = money(sum+vat);
     }
 
+    function collectPayload(){
+      const items = [];
+      document.querySelectorAll('#priceTable tbody tr').forEach(tr=>{
+        const title = tr.children[0].textContent.trim();
+        const priceText = tr.children[1].textContent.trim();
+        const qty = Number(tr.querySelector('input')?.value || 0);
+        const unit = tr.children[3].textContent.trim();
+        const sumText = tr.children[4].textContent.trim();
+        // фикс-позиции тоже полезно отправлять
+        if(qty>0 || priceText==='—' || /фикс/i.test(unit)){
+          items.push({title, price:priceText, qty, unit, sum:sumText});
+        }
+      });
+      return {
+        email: (document.getElementById('email')?.value || '').trim(),
+        sumNoVat: document.getElementById('sumNoVat').textContent,
+        vat:     document.getElementById('sumVat').textContent,
+        total:   document.getElementById('sumTotal').textContent,
+        items,
+        vat_rate: 20
+      };
+    }
+
     draw();
 
-    // кнопка
     document.getElementById('btnCalc').onclick = ()=>{
-      try{ window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('soft'); }catch(e){}
-      // при желании отправь данные в бота:
-      // Telegram.WebApp.sendData(JSON.stringify({rows}));
-      alert('Расчёт готов. Подключи отправку в бота через WebAppData, если нужно.');
+      const payload = collectPayload();
+      try{ Telegram.WebApp.HapticFeedback?.impactOccurred('soft'); }catch(e){}
+      Telegram.WebApp.ready?.();
+      Telegram.WebApp.sendData(JSON.stringify(payload)); // уходит в бота
     };
+    document.getElementById('btnRefresh').onclick = ()=> location.reload();
   </script>
 </body>
 </html>
