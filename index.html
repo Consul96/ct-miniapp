@@ -6,98 +6,44 @@
   <title>Калькулятор услуг маркировки — Mini App</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    /* ===== TOKENS ===== */
     :root{
-      --bg:#F3F4F6;
-      --card:#FFFFFF;
-      --line:#E2E8F0;
-      --text:#0F172A;
-      --muted:#475569;
-      --accent:#FF7A00;        /* фирменный */
-      --accent-500:#F97316;    /* кнопки/инпуты */
-      --accent-weak:#FFF7ED;   /* фон шапки таблицы */
-
+      --bg:#F3F4F6; --card:#FFF; --line:#E2E8F0; --text:#0F172A; --muted:#475569;
+      --accent-500:#F97316; --accent-weak:#FFF7ED;
       --font:Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       --fs-12:12px; --fs-14:14px; --fs-16:16px; --fs-18:18px;
-
-      --r-sm:10px; --r-md:12px; --r-lg:16px;
-      --shadow-card:0 10px 30px rgba(2,6,23,.08);
-
-      --vat:0.20;
+      --r-md:12px; --r-lg:16px; --shadow-card:0 10px 30px rgba(2,6,23,.08);
     }
-
-    /* ===== BASE ===== */
     html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--font)}
     .wrap{min-height:100dvh;display:flex;justify-content:center;padding:clamp(12px,2.5vw,24px)}
-    .container{
-      width:clamp(320px,96vw,1200px);
-      background:var(--card); border:1px solid var(--line);
-      border-radius:var(--r-lg); box-shadow:var(--shadow-card); overflow:hidden;
-    }
-
-    /* ===== HEADER ===== */
+    .container{width:clamp(320px,96vw,1200px);background:var(--card);border:1px solid var(--line);
+      border-radius:var(--r-lg);box-shadow:var(--shadow-card);overflow:hidden}
     .header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line)}
     .h-left h1{margin:0;font-size:var(--fs-18)}
     .h-left small{display:block;margin-top:4px;color:var(--muted);font-size:var(--fs-12)}
-    .btn{
-      display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:var(--r-md);
-      background:var(--accent-500);border:1px solid var(--accent-500);color:#fff;font-weight:700;cursor:pointer
-    }
-    .btn:active{transform:translateY(1px)}
-
-    /* ===== CHIP BAR ===== */
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:var(--r-md);
+      background:var(--accent-500);border:1px solid var(--accent-500);color:#fff;font-weight:700;cursor:pointer}
     .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:12px 20px;border-bottom:1px solid var(--line);background:#fff}
-    .chip{
-      display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:20px;
-      background:var(--accent-weak);border:1px solid var(--line);font-size:var(--fs-12);font-weight:600
-    }
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:20px;background:var(--accent-weak);
+      border:1px solid var(--line);font-size:var(--fs-12);font-weight:600;white-space:nowrap}
     .toolbar .right{margin-left:auto;display:flex;gap:8px;align-items:center}
-    .link{color:var(--muted);text-decoration:underline;cursor:pointer}
-
-    /* ===== TABLE ===== */
+    .select{height:34px;border:1px solid var(--accent-500);border-radius:12px;padding:0 10px;background:#fff}
+    .link{color:var(--muted);text-decoration:underline;cursor:pointer;font-size:12px}
     .table-wrap{overflow-x:auto}
     .table{min-width:860px;width:100%;border-collapse:collapse;table-layout:fixed;font-size:var(--fs-14)}
-    .table thead th{
-      background:var(--accent-weak); color:var(--muted); text-transform:uppercase; letter-spacing:.02em;
-      padding:12px 14px; text-align:left; font-size:var(--fs-12); border-bottom:1px solid var(--line)
-    }
+    .table thead th{background:var(--accent-weak);color:var(--muted);text-transform:uppercase;letter-spacing:.02em;
+      padding:12px 14px;text-align:left;font-size:var(--fs-12);border-bottom:1px solid var(--line)}
     .table tbody td{padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
     .col-name{width:46%}.col-price{width:14%}.col-qty{width:12%}.col-unit{width:8%}.col-sum{width:8%}.col-vat{width:6%}.col-total{width:6%}
-
-    .input{
-      width:100%;height:36px;box-sizing:border-box;background:#fff;font-size:var(--fs-14);
-      border-radius:var(--r-md);padding:0 10px;border:1px solid var(--accent-500)
-    }
-    .input:focus{outline:none;box-shadow:0 0 0 3px rgba(249,115,22,.15)}
-
-    /* ===== TOTALS ===== */
+    .input{width:100%;height:36px;box-sizing:border-box;background:#fff;font-size:var(--fs-14);
+      border-radius:var(--r-md);padding:0 10px;border:1px solid var(--accent-500)}
     .totals{padding:16px 20px 24px;display:flex;justify-content:flex-end}
     .totals-col{width:320px;display:grid;gap:8px}
-    .badge{
-      display:flex;justify-content:space-between;align-items:center;
-      padding:10px 14px;border-radius:10px;background:var(--accent-500);color:#fff;font-weight:700
-    }
-    .badge span{opacity:.92;font-weight:600}
-    .muted{color:var(--muted)}
-
-    /* ===== MOBILE ===== */
-    @media (max-width:900px){
-      .header{padding:12px 14px}
-      .toolbar{padding:10px 14px}
-      .table thead th,.table tbody td{padding:10px 12px}
-      .btn{padding:9px 12px}
-    }
-    @media (max-width:600px){
-      .h-left h1{font-size:16px}
-      .totals{justify-content:stretch}
-      .totals-col{width:100%}
-    }
+    .badge{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-radius:10px;background:var(--accent-500);color:#fff;font-weight:700}
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="container">
-      <!-- Header -->
       <div class="header">
         <div class="h-left">
           <h1>Калькулятор услуг по маркировке</h1>
@@ -106,19 +52,26 @@
         <button class="btn" id="btnCalc">Получить расчёт</button>
       </div>
 
-      <!-- Chips -->
       <div class="toolbar">
         <div class="chip">Ставка НДС: <strong id="chipVat">20%</strong></div>
-        <div class="chip">Валюта: <strong>RUB</strong></div>
+
+        <div class="chip">Валюта:&nbsp;
+          <select id="currency" class="select">
+            <option value="RUB">RUB</option>
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+            <option value="CNY">CNY</option>
+          </select>
+        </div>
+
+        <div class="chip" id="ratesChip">Курсы ЦБ РФ: …</div>
 
         <div class="right">
-          <input id="email" type="email" placeholder="email для счёта"
-                 class="input" style="width:220px;height:34px">
           <span class="chip" id="btnRefresh" style="background:#fff">Обновить</span>
+          <span class="link" id="changeEmail">сменить e-mail</span>
         </div>
       </div>
 
-      <!-- Table -->
       <div class="table-wrap">
         <table class="table" id="priceTable">
           <colgroup>
@@ -127,20 +80,14 @@
           </colgroup>
           <thead>
             <tr>
-              <th>Наименование</th>
-              <th>Стоимость</th>
-              <th>Количество</th>
-              <th>Ед. измерения</th>
-              <th>Сумма</th>
-              <th>Налог</th>
-              <th>Итого</th>
+              <th>Наименование</th><th>Стоимость</th><th>Количество</th>
+              <th>Ед. измерения</th><th>Сумма</th><th>Налог</th><th>Итого</th>
             </tr>
           </thead>
           <tbody></tbody>
         </table>
       </div>
 
-      <!-- Totals -->
       <div class="totals">
         <div class="totals-col">
           <div class="badge"><span>Без НДС</span><strong id="sumNoVat">0 ₽</strong></div>
@@ -151,99 +98,138 @@
     </div>
   </div>
 
-  <script>
-    const VAT = 0.20;
-    const pdfRate = q => q>=10000?12 : q>=5000?15 : q>=2000?18 : q>=1000?20 : q>=500?25 : 30;
+<script>
+  // === auth guard: нужен email из авторизации ===
+  const EMAIL_RE=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+  let EMAIL = localStorage.getItem('ctm_email') || '';
+  if(!EMAIL || !EMAIL_RE.test(EMAIL)){
+    // нет e-mail → уводим на авторизацию
+    location.href = './auth.html';
+  }
 
-    const rows = [
-      { key:'gtin_km', title:'Получение GTIN и КМ (контракт агента)', unit:'шт', price:0.60 },
-      { key:'pdf',     title:'Формирование PDF с КМ (если контракт агента — бесплатно)', unit:'шт', priceFn:q=>pdfRate(q) },
-      { key:'mdlp',    title:'Подключение МЧД, получение GTIN и КМ в ЛК клиента', unit:'шт', price:15000, fixed:true },
-      { key:'consult', title:'Консультация по вопросам маркировки, УПД', unit:'ч',  price:2500 },
-      { key:'pack',    title:'Пакетирование', unit:'шт', price:1.50 },
-      { key:'tpl',     title:'Создание шаблона этикеток', unit:'фикс', price:2000, fixed:true },
-      { key:'nkt',     title:'Оформление карточек в НКТ', unit:'шт', price:2.00 },
-      { key:'reg',     title:'Регистрация в ЧЗ/GS1 РУС', unit:'фикс', price:15000, fixed:true },
-    ];
-
-    const tbody = document.querySelector('#priceTable tbody');
-    const money = n => (n||0).toLocaleString('ru-RU',{style:'currency',currency:'RUB',maximumFractionDigits:2});
-
-    function draw(){
-      tbody.innerHTML='';
-      rows.forEach(r=>{
-        const tr = document.createElement('tr');
-
-        const qty = document.createElement('input');
-        qty.className='input'; qty.type='number'; qty.min='0'; qty.value=r.qty||0;
-        qty.oninput = ()=>{ r.qty=+qty.value; redrawRow(tr,r); recalc(); };
-
-        function redrawRow(el,row){
-          const price = (row.priceFn ? row.priceFn(row.qty||0) : row.price)||0;
-          const rowSum = (row.fixed ? price : price*(row.qty||0));
-          const rowVat = rowSum*VAT;
-
-          el.innerHTML = `
-            <td>${row.title}</td>
-            <td>${price? money(price) + (row.fixed?'':' / шт') : '—'}</td>
-            <td></td>
-            <td>${row.unit}</td>
-            <td>${money(rowSum)}</td>
-            <td>${money(rowVat)}</td>
-            <td>${money(rowSum+rowVat)}</td>
-          `;
-          el.children[2].appendChild(qty);
-          el.dataset.sum=rowSum; el.dataset.vat=rowVat;
-        }
-
-        redrawRow(tr,r);
-        tbody.appendChild(tr);
-      });
-      recalc();
+  // смена e-mail прямо из калькулятора (по просьбе)
+  document.getElementById('changeEmail').onclick = ()=>{
+    const v = prompt('Введите e-mail для отправки расчётов', EMAIL||'');
+    if(v && EMAIL_RE.test(v)){
+      EMAIL = v.trim();
+      localStorage.setItem('ctm_email', EMAIL);
+      alert('E-mail сохранён');
+    }else if(v!==null){
+      alert('Некорректный e-mail');
     }
+  };
 
-    function recalc(){
-      let sum=0,vat=0;
-      tbody.querySelectorAll('tr').forEach(tr=>{
-        sum+=Number(tr.dataset.sum||0); vat+=Number(tr.dataset.vat||0);
-      });
-      document.getElementById('sumNoVat').textContent = money(sum);
-      document.getElementById('sumVat').textContent   = money(vat);
-      document.getElementById('sumTotal').textContent = money(sum+vat);
-    }
+  // === курсы/валюта ===
+  const VAT = 0.20;
+  let currency = 'RUB';
+  let rates = { RUB: 1, USD: 90, EUR: 100, CNY: 12 };
+  let ratesDate = '';
 
-    function collectPayload(){
-      const items = [];
-      document.querySelectorAll('#priceTable tbody tr').forEach(tr=>{
-        const title = tr.children[0].textContent.trim();
-        const priceText = tr.children[1].textContent.trim();
-        const qty = Number(tr.querySelector('input')?.value || 0);
-        const unit = tr.children[3].textContent.trim();
-        const sumText = tr.children[4].textContent.trim();
-        // фикс-позиции тоже полезно отправлять
-        if(qty>0 || priceText==='—' || /фикс/i.test(unit)){
-          items.push({title, price:priceText, qty, unit, sum:sumText});
-        }
-      });
-      return {
-        email: (document.getElementById('email')?.value || '').trim(),
-        sumNoVat: document.getElementById('sumNoVat').textContent,
-        vat:     document.getElementById('sumVat').textContent,
-        total:   document.getElementById('sumTotal').textContent,
-        items,
-        vat_rate: 20
-      };
-    }
+  const rows = [
+    { key:'gtin_km', title:'Получение GTIN и КМ (контракт агента)', unit:'шт', price_rub:0.60 },
+    { key:'pdf',     title:'Формирование PDF с КМ (если контракт агента — бесплатно)', unit:'шт',
+      priceFn:q=> (q>=10000?12:q>=5000?15:q>=2000?18:q>=1000?20:q>=500?25:30) },
+    { key:'mdlp',    title:'Подключение МЧД, получение GTIN и КМ в ЛК клиента', unit:'шт', price_rub:15000, fixed:true },
+    { key:'consult', title:'Консультация по вопросам маркировки, УПД', unit:'ч',  price_rub:2500 },
+    { key:'pack',    title:'Пакетирование', unit:'шт', price_rub:1.50 },
+    { key:'tpl',     title:'Создание шаблона этикеток', unit:'фикс', price_rub:2000, fixed:true },
+    { key:'nkt',     title:'Оформление карточек в НКТ', unit:'шт', price_rub:2.00 },
+    { key:'reg',     title:'Регистрация в ЧЗ/GS1 РУС', unit:'фикс', price_rub:15000, fixed:true },
+  ];
 
-    draw();
+  const tbody = document.querySelector('#priceTable tbody');
+  const moneyFmt = (n,c)=> (n||0).toLocaleString(c==='RUB'?'ru-RU':'en-US',{style:'currency',currency:c,maximumFractionDigits:2});
+  const convert = (rub,c)=> c==='RUB'?rub:(rub/(rates[c]||1));
 
-    document.getElementById('btnCalc').onclick = ()=>{
-      const payload = collectPayload();
-      try{ Telegram.WebApp.HapticFeedback?.impactOccurred('soft'); }catch(e){}
-      Telegram.WebApp.ready?.();
-      Telegram.WebApp.sendData(JSON.stringify(payload)); // уходит в бота
+  async function fetchRates(){
+    try{
+      const r = await fetch('https://www.cbr-xml-daily.ru/daily_json.js',{cache:'no-store'});
+      const j = await r.json();
+      rates.USD=j.Valute.USD.Value; rates.EUR=j.Valute.EUR.Value; rates.CNY=j.Valute.CNY.Value;
+      ratesDate = new Date(j.Date).toLocaleDateString('ru-RU');
+    }catch(e){}
+    updateRatesChip(); recalcAll();
+  }
+  function updateRatesChip(){
+    const chip = document.getElementById('ratesChip');
+    chip.textContent = `Курсы ЦБ РФ: USD ${rates.USD.toFixed(2)} • EUR ${rates.EUR.toFixed(2)} • CNY ${rates.CNY.toFixed(2)}${ratesDate?' от '+ratesDate:''}`;
+  }
+
+  function draw(){
+    tbody.innerHTML='';
+    rows.forEach(r=>{
+      const tr=document.createElement('tr');
+      const qty=document.createElement('input');
+      qty.className='input'; qty.type='number'; qty.min='0'; qty.value=r.qty||0;
+      qty.oninput=()=>{r.qty=+qty.value; redrawRow(tr,r); recalcTotals();};
+
+      function priceRub(row){ return row.priceFn ? row.priceFn(row.qty||0) : (row.price_rub||0); }
+      function redrawRow(el,row){
+        const pRub=priceRub(row), p=convert(pRub,currency);
+        const sumRub=row.fixed?pRub:pRub*(row.qty||0);
+        const vatRub=sumRub*VAT;
+
+        el.innerHTML=`
+          <td>${row.title}</td>
+          <td>${pRub? moneyFmt(p,currency)+(row.fixed?'':' / шт'):'—'}</td>
+          <td></td><td>${row.unit}</td>
+          <td>${moneyFmt(convert(sumRub,currency),currency)}</td>
+          <td>${moneyFmt(convert(vatRub,currency),currency)}</td>
+          <td>${moneyFmt(convert(sumRub+vatRub,currency),currency)}</td>`;
+        el.children[2].appendChild(qty);
+        el.dataset.sumRub=sumRub; el.dataset.vatRub=vatRub;
+      }
+      redrawRow(tr,r); tbody.appendChild(tr);
+    });
+    recalcTotals();
+  }
+  function recalcTotals(){
+    let s=0,v=0;
+    tbody.querySelectorAll('tr').forEach(tr=>{s+=+tr.dataset.sumRub||0; v+=+tr.dataset.vatRub||0;});
+    document.getElementById('sumNoVat').textContent=moneyFmt(convert(s,currency),currency);
+    document.getElementById('sumVat').textContent=moneyFmt(convert(v,currency),currency);
+    document.getElementById('sumTotal').textContent=moneyFmt(convert(s+v,currency),currency);
+  }
+  function recalcAll(){
+    document.querySelectorAll('#priceTable tbody tr input').forEach(inp=>{
+      inp.dispatchEvent(new Event('input'));
+    });
+    updateRatesChip(); recalcTotals();
+  }
+
+  function collectPayload(){
+    const items=[];
+    document.querySelectorAll('#priceTable tbody tr').forEach(tr=>{
+      const title=tr.children[0].textContent.trim();
+      const priceText=tr.children[1].textContent.trim();
+      const qty=Number(tr.querySelector('input')?.value||0);
+      const unit=tr.children[3].textContent.trim();
+      const sumText=tr.children[4].textContent.trim();
+      if(qty>0 || priceText==='—' || /фикс/i.test(unit)){
+        items.push({title,price:priceText,qty,unit,sum:sumText});
+      }
+    });
+    return {
+      email: EMAIL,               // ← из авторизации
+      currency,
+      rates:{...rates, date:ratesDate},
+      sumNoVat:document.getElementById('sumNoVat').textContent,
+      vat:document.getElementById('sumVat').textContent,
+      total:document.getElementById('sumTotal').textContent,
+      items,
+      vat_rate:20
     };
-    document.getElementById('btnRefresh').onclick = ()=> location.reload();
-  </script>
+  }
+
+  draw(); fetchRates();
+  document.getElementById('currency').onchange=e=>{currency=e.target.value; recalcAll();};
+  document.getElementById('btnRefresh').onclick=fetchRates;
+
+  document.getElementById('btnCalc').onclick=()=>{
+    const payload=collectPayload();
+    Telegram.WebApp.ready?.();
+    Telegram.WebApp.sendData(JSON.stringify(payload)); // бот сформирует PDF и отправит в чат + на e-mail
+  };
+</script>
 </body>
 </html>

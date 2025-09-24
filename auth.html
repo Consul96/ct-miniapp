@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CT Mentor — Авторизация</title>
+<style>
+  :root{--bg:#F3F4F6;--card:#fff;--line:#E2E8F0;--text:#0F172A;--muted:#475569;--accent:#F97316;
+        --r:16px;--shadow:0 12px 40px rgba(2,6,23,.10);--font:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
+  html,body{margin:0;height:100%;background:var(--bg);font-family:var(--font);color:var(--text)}
+  .wrap{min-height:100dvh;display:grid;place-items:center;padding:24px}
+  .card{width:min(420px,92vw);background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:28px}
+  h1{margin:0 0 8px 0;font-size:22px}
+  p{margin:0 0 18px 0;color:var(--muted)}
+  .field{margin-bottom:12px}
+  .label{font-size:13px;color:var(--muted);margin-bottom:6px}
+  .input{width:100%;height:42px;border:1px solid var(--line);border-radius:12px;padding:0 12px;font-size:15px}
+  .btn{width:100%;height:44px;margin-top:14px;border:none;border-radius:12px;background:var(--accent);color:#fff;font-weight:700;cursor:pointer}
+  .footer{margin-top:16px;font-size:13px;color:var(--muted);text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>Вход в CT Mentor</h1>
+    <p>Введите код доступа и e-mail для счетов.</p>
+
+    <div class="field">
+      <div class="label">Код доступа</div>
+      <input id="pass" class="input" type="password" placeholder="Код доступа">
+    </div>
+
+    <div class="field">
+      <div class="label">E-mail для отправки PDF расчёта</div>
+      <input id="email" class="input" type="email" placeholder="name@company.ru" autocomplete="email">
+    </div>
+
+    <button class="btn" id="go">Войти</button>
+    <div class="footer">© Cargo Trans</div>
+  </div>
+</div>
+<script>
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+  document.getElementById('go').onclick = ()=>{
+    const pass = document.getElementById('pass').value.trim();
+    const email = document.getElementById('email').value.trim();
+
+    if(!pass){ alert('Введите код доступа'); return; }
+    if(!EMAIL_RE.test(email)){ alert('Введите корректный e-mail'); return; }
+
+    // сохраняем «сессию»
+    localStorage.setItem('ctm_token', pass);
+    localStorage.setItem('ctm_email', email);
+
+    // переход в калькулятор
+    location.href = './index.html';
+  };
+</script>
+</body>
+</html>
