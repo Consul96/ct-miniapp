@@ -6,373 +6,213 @@
   <title>Калькулятор услуг маркировки — Mini App</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
+    /* ================= TOKENS ================= */
     :root{
-      --bg:#0f172a0d;           /* фон */
-      --card:#fff;              /* карточки */
-      --text:#0f172a;           /* основной текст */
-      --muted:#475569;          /* вторичный текст */
-      --line:#e2e8f0;           /* границы */
+      /* цвета */
+      --bg:#F3F4F6;
+      --card:#FFFFFF;          /* #FFF в Figma */
+      --line:#E2E8F0;          /* бордер карточки и строк */
+      --text:#0F172A;
+      --muted:#475569;
+      --accent:#FF7A00;        /* твой оранжевый */
+      --accent-500:#F97316;    /* яркий оранжевый для кнопок/инпутов */
+      --accent-weak:#FFF7ED;   /* фон шапки таблицы/чипов */
 
-      /* Оранжевая тема */
-      --accent:#f97316;         /* orange-500 */
-      --accent-weak:#fff7ed;    /* orange-50 */
-      --ok:#16a34a; --danger:#ef4444;
+      /* типографика */
+      --font:Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      --fs-12:12px; --fs-14:14px; --fs-16:16px; --fs-18:18px;
+
+      /* радиусы/тени/отступы */
+      --r-sm:10px; --r-md:12px; --r-lg:16px;
+      --shadow-card:0 10px 30px rgba(2,6,23,.08);
+      --space-8:8px; --space-12:12px; --space-16:16px; --space-20:20px;
+
+      /* НДС по умолчанию */
+      --vat:0.20;
     }
-    html,body{margin:0;padding:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);}
-    .container{max-width:1200px;margin:24px auto;padding:0 16px;}
-    .card{background:var(--card);border-radius:16px;box-shadow:0 10px 30px rgba(2,6,23,.08);overflow:hidden;border:1px solid var(--line)}
-    .card-hd{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--line);}
-    .hd-title{font-weight:700;display:flex;gap:10px;align-items:center}
-    .hd-title svg{width:20px;height:20px;color:var(--accent)}
-    .hd-total{font-weight:800;font-size:18px}
-    .hd-sub{font-size:12px;color:var(--muted)}
 
-    /* Таблица с ровными ячейками */
-    table{width:100%;border-collapse:collapse;table-layout:fixed}
-    colgroup col:nth-child(1){width:30%}
-    colgroup col:nth-child(2){width:14%}
-    colgroup col:nth-child(3){width:16%}
-    colgroup col:nth-child(4){width:14%}
-    colgroup col:nth-child(5){width:10%}
-    colgroup col:nth-child(6){width:8%}
-    colgroup col:nth-child(7){width:8%}
-
-    thead th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding:10px 14px;background:var(--accent-weak);text-align:left;border-bottom:1px solid var(--line)}
-    tbody td{padding:14px;border-bottom:1px solid var(--line);vertical-align:middle}
-    tbody tr:hover{background:#f8fafc}
-    .srv-name{display:flex;gap:8px;align-items:center}
-    .hint{color:var(--muted);font-size:12px}
-
-    input[type="number"]{
-      width:100%;max-width:120px;box-sizing:border-box;
-      padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;background:#fff;
+    /* =============== BASE =============== */
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--font)}
+    .wrap{min-height:100dvh;display:flex;justify-content:center;padding:24px}
+    .container{
+      width:1200px; background:var(--card); border:1px solid var(--line);
+      border-radius:var(--r-lg); box-shadow:var(--shadow-card); overflow:hidden;
     }
-    input[disabled]{background:#f1f5f9;color:#94a3b8}
 
-    .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:#f1f5f9;color:#334155;font-size:12px;border:1px solid var(--line)}
-    .btn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 10px;font-size:12px;cursor:pointer}
-    .btn:hover{background:#f8fafc}
-
-    .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-
-    .footer{display:grid;grid-template-columns: 1fr minmax(240px,340px);gap:16px;padding:16px}
-    .foot-card{background:#f8fafc;border-radius:12px;padding:14px 16px;border:1px solid var(--line)}
-    .row{display:flex;justify-content:space-between;align-items:center;padding:8px 0}
-    .row .label{color:var(--muted)}
-    .row.total{background:var(--accent);color:#fff;border-radius:10px;padding:14px 16px;font-weight:800}
-
-    .mini{font-size:12px;color:var(--muted)}
-    .hide-sm{display:table-cell}
-    @media (max-width:760px){
-      .hd-total{font-size:16px}
-      .hide-sm{display:none}
-      input[type="number"]{max-width:100px}
+    /* =============== HEADER =============== */
+    .header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line)}
+    .h-left h1{margin:0;font-size:var(--fs-18)}
+    .h-left small{display:block;margin-top:4px;color:var(--muted);font-size:var(--fs-12)}
+    .btn{
+      display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:var(--r-md);
+      background:var(--accent-500);border:1px solid var(--accent-500);color:#fff;font-weight:700;cursor:pointer
     }
+    .btn:active{transform:translateY(1px)}
+
+    /* =============== CHIP BAR =============== */
+    .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:12px 20px;border-bottom:1px solid var(--line);background:#fff}
+    .chip{
+      display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:20px;
+      background:var(--accent-weak);border:1px solid var(--line);font-size:var(--fs-12);font-weight:600
+    }
+    .toolbar .right{margin-left:auto;display:flex;gap:8px;align-items:center;font-size:var(--fs-12);color:var(--muted)}
+    .link{color:var(--muted);text-decoration:underline;cursor:pointer}
+
+    /* =============== TABLE =============== */
+    .table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:var(--fs-14)}
+    .table thead th{
+      background:var(--accent-weak); color:var(--muted); text-transform:uppercase; letter-spacing:.02em;
+      padding:12px 14px; text-align:left; font-size:var(--fs-12); border-bottom:1px solid var(--line)
+    }
+    .table tbody td{padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+    .col-name{width:46%}.col-price{width:14%}.col-qty{width:12%}.col-unit{width:8%}.col-sum{width:8%}.col-vat{width:6%}.col-total{width:6%}
+
+    .input{
+      width:100%;height:36px;box-sizing:border-box;background:#fff;font-size:var(--fs-14);
+      border-radius:var(--r-md);padding:0 10px;border:1px solid var(--accent-500)
+    }
+    .input:focus{outline:none;box-shadow:0 0 0 3px rgba(249,115,22,.15)}
+
+    /* =============== TOTALS =============== */
+    .totals{padding:16px 20px 24px;display:flex;justify-content:flex-end}
+    .totals-col{width:320px;display:grid;gap:8px}
+    .badge{
+      display:flex;justify-content:space-between;align-items:center;
+      padding:10px 14px;border-radius:10px;background:var(--accent-500);color:#fff;font-weight:700
+    }
+    .badge span{opacity:.92;font-weight:600}
+    .muted{color:var(--muted)}
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="card" id="card">
-      <div class="card-hd">
-        <div class="hd-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"/></svg>
-          <div>
-            Получение маркировки
-            <div class="mini" id="currencyNote"></div>
-          </div>
+  <div class="wrap">
+    <div class="container">
+      <!-- Header -->
+      <div class="header">
+        <div class="h-left">
+          <h1>Калькулятор услуг по маркировке</h1>
+          <small>Отображение сумм в выбранной валюте (по умолчанию RUB)</small>
         </div>
-        <div style="text-align:right">
-          <div class="hd-total" id="grandTotal">0</div>
-          <div class="hd-sub" id="grandTax">в т.ч. НДС 0</div>
+        <button class="btn" id="btnCalc">Получить расчёт</button>
+      </div>
+
+      <!-- Chips -->
+      <div class="toolbar">
+        <div class="chip">Ставка НДС: <strong id="chipVat">20%</strong></div>
+        <div class="chip">Валюта: <strong>RUB</strong></div>
+        <div class="right">
+          <span id="rates">Курсы ЦБ РФ: USD 81.56 • EUR 95.48 • CNY 11.39 от 06.09.2025</span>
+          <span class="chip" style="background:#fff">Обновить</span>
         </div>
       </div>
 
-      <div style="padding:14px 16px 0;">
-        <div class="controls">
-          <span class="chip">Ставка НДС: <b id="vatLabel">20%</b></span>
-          <!-- Маржу не показываем на публичной странице -->
-          <span class="chip">
-            Валюта:
-            <select id="currencySel">
-              <option value="RUB" selected>RUB</option>
-              <option value="USD">USD</option>
-              <option value="EUR">EUR</option>
-              <option value="CNY">CNY</option>
-            </select>
-          </span>
-          <span class="chip">Курсы ЦБ РФ: <span id="ratesView">—</span></span>
-          <button class="btn" id="btnRefresh">Обновить</button>
-        </div>
-      </div>
-
-      <table>
+      <!-- Table -->
+      <table class="table" id="priceTable">
         <colgroup>
-          <col><col class="hide-sm"><col><col class="hide-sm"><col><col class="hide-sm"><col class="hide-sm">
+          <col class="col-name"><col class="col-price"><col class="col-qty">
+          <col class="col-unit"><col class="col-sum"><col class="col-vat"><col class="col-total">
         </colgroup>
         <thead>
           <tr>
             <th>Наименование</th>
-            <th class="hide-sm">Стоимость</th>
+            <th>Стоимость</th>
             <th>Количество</th>
-            <th class="hide-sm">Ед. измерения</th>
+            <th>Ед. измерения</th>
             <th>Сумма</th>
-            <th class="hide-sm">Налог</th>
-            <th class="hide-sm">Итого</th>
+            <th>Налог</th>
+            <th>Итого</th>
           </tr>
         </thead>
-        <tbody id="rows"></tbody>
+        <tbody><!-- будет заполнено JS --></tbody>
       </table>
 
-      <div class="footer">
-        <div></div>
-        <div class="foot-card">
-          <div class="row"><div class="label">Сумма без НДС</div><div id="sumNet">0</div></div>
-          <div class="row"><div class="label">НДС</div><div id="sumVat">0</div></div>
-          <div class="row total"><div>ИТОГО</div><div id="sumGross">0</div></div>
+      <!-- Totals -->
+      <div class="totals">
+        <div class="totals-col">
+          <div class="badge"><span>Без НДС</span><strong id="sumNoVat">0 ₽</strong></div>
+          <div class="badge"><span>НДС</span><strong id="sumVat">0 ₽</strong></div>
+          <div class="badge"><span>ИТОГО</span><strong id="sumTotal">0 ₽</strong></div>
         </div>
       </div>
     </div>
   </div>
 
-<script>
-/* ---------- ПРАЙСЫ (всегда в ₽) ---------- */
-const PRICE_KM   = 0.60;     // ₽/шт
-const PRICE_APPL = 6.0;      // ₽/шт
-const PRICE_PRINT= 2.5;      // ₽/шт
-const PRICE_PACK = 1.5;      // ₽/шт
-const PRICE_TPL  = 2000.0;   // ₽ фикс
-const PRICE_NKT  = 2.0;      // ₽/шт
-const PRICE_REG  = 15000.0;  // ₽ фикс
+  <script>
+    /* ====== ЛОГИКА ====== */
+    const VAT = 0.20;
 
-const PDF_TIERS = [
-  {min:10000, rate:12.0},
-  {min:5000,  rate:15.0},
-  {min:2000,  rate:18.0},
-  {min:1000,  rate:20.0},
-  {min:500,   rate:25.0},
-  {min:0,     rate:30.0}
-];
+    // ступени для PDF с КМ
+    const pdfRate = q => q>=10000?12 : q>=5000?15 : q>=2000?18 : q>=1000?20 : q>=500?25 : 30;
 
-/* ---------- Параметры расчёта ---------- */
-const DEFAULT_VAT = 0.20;     // 20%
-const DEFAULT_MARGIN = 0.15;  // используется в формуле, но не показывается
+    // строки как в макете
+    const rows = [
+      { key:'gtin_km', title:'Получение GTIN и КМ (контракт агента)', unit:'шт', price:0.60 },
+      { key:'pdf',     title:'Формирование PDF с КМ (если контракт агента — бесплатно)', unit:'шт', priceFn:q=>pdfRate(q) },
+      { key:'mdlp',    title:'Подключение МЧД, получение GTIN и КМ в ЛК клиента', unit:'шт', price:15000, fixed:true },
+      { key:'consult', title:'Консультация по вопросам маркировки, УПД', unit:'ч',  price:2500 },
+      { key:'pack',    title:'Пакетирование', unit:'шт', price:1.50 },
+      { key:'tpl',     title:'Создание шаблона этикеток', unit:'фикс', price:2000, fixed:true },
+      { key:'nkt',     title:'Оформление карточек в НКТ', unit:'шт', price:2.00 },
+      { key:'reg',     title:'Регистрация в ЧЗ/GS1 РУС', unit:'фикс', price:15000, fixed:true },
+    ];
 
-/* Условные трудозатраты — можно вынести в конфиг */
-const MONTHLY_SALARY = 120000.0;
-const OVERHEAD = 1.30, HOURS_PER_MONTH = 168.0, UTIL = 0.85;
-const BASE_H = 0.5, PER_1000_KM_H=0.6, APPL_H=0.8, PRINT_H=0.4, PACK_H=0.3, TPL_H=0.4, REG_H=0.6, PDF_H=0.0;
-function hourlyRate(){return (MONTHLY_SALARY*OVERHEAD)/(HOURS_PER_MONTH*Math.max(0.1,UTIL));}
-function pdfRate(qty){ for(const t of PDF_TIERS){ if(qty>=t.min) return t.rate; } return PDF_TIERS.at(-1).rate; }
+    const tbody = document.querySelector('#priceTable tbody');
+    const money = n => (n||0).toLocaleString('ru-RU',{style:'currency',currency:'RUB',maximumFractionDigits:2});
+    const num = n => (n||0).toLocaleString('ru-RU',{minimumFractionDigits:1,maximumFractionDigits:1});
 
-/* ---------- Форматирование валют ---------- */
-const nfRUB = new Intl.NumberFormat('ru-RU',{style:'currency', currency:'RUB', maximumFractionDigits:2});
-const nfUSD = new Intl.NumberFormat('en-US',{style:'currency', currency:'USD', maximumFractionDigits:2});
-const nfEUR = new Intl.NumberFormat('de-DE',{style:'currency', currency:'EUR', maximumFractionDigits:2});
-const nfCNY = new Intl.NumberFormat('zh-CN',{style:'currency', currency:'CNY', maximumFractionDigits:2});
-function fmt(amountRub){
-  const rub = Number(amountRub)||0, cur = state.currency, r = state.rates;
-  if(cur==='RUB') return nfRUB.format(rub);
-  if(cur==='USD') return nfUSD.format(rub / r.USD);
-  if(cur==='EUR') return nfEUR.format(rub / r.EUR);
-  if(cur==='CNY') return nfCNY.format(rub / r.CNY);
-  return nfRUB.format(rub);
-}
+    function draw(){
+      tbody.innerHTML='';
+      rows.forEach(r=>{
+        const tr = document.createElement('tr');
 
-/* ---------- Состояние ---------- */
-const state = {
-  currency: 'RUB',
-  vat: DEFAULT_VAT,
-  margin: DEFAULT_MARGIN,
-  kmQty: 0,
-  rates: { USD:95, EUR:105, CNY:13 }, // стартовые плейсхолдеры
-  items: [],
-  _totals: {}
-};
+        const qty = document.createElement('input');
+        qty.className='input';
+        qty.type='number'; qty.min='0'; qty.value=r.qty||0;
+        qty.oninput = ()=>{ r.qty=+qty.value; redrawRow(tr,r); recalc(); };
 
-/* ---------- Описание строк ---------- */
-const defs = [
-  { id:'get_km',      name:'Получение КМ в ЧЗ',            unit:'шт',              type:'per_unit', price:()=>PRICE_KM, qty:'kmQty', editable:false },
-  { id:'pdf_labels',  name:'Формирование КИЗ c PDF',       unit:'этикетки PDF',    type:'per_unit', price:()=>pdfRate(state.kmQty), qty:'kmQty', editable:false },
-  { id:'apply',       name:'Нанесение',                    unit:'шт',              type:'per_unit', price:()=>PRICE_APPL },
-  { id:'print',       name:'Печать',                       unit:'шт',              type:'per_unit', price:()=>PRICE_PRINT },
-  { id:'pack',        name:'Пакетирование',                unit:'шт',              type:'per_unit', price:()=>PRICE_PACK },
-  { id:'tpl',         name:'Создание шаблона этикеток',    unit:'шаблоны этикеток',type:'fixed',    price:()=>PRICE_TPL },
-  { id:'nkt',         name:'Карточки в НКТ',               unit:'карточки',        type:'per_unit', price:()=>PRICE_NKT },
-  { id:'reg',         name:'Регистрация в ЧЗ/GS1 РУС',     unit:'регистрация',     type:'fixed',    price:()=>PRICE_REG },
-];
+        function redrawRow(el,row){
+          const price = (row.priceFn ? row.priceFn(row.qty||0) : row.price)||0;
+          const rowSum = (row.fixed ? price : price*(row.qty||0));
+          const rowVat = rowSum*VAT;
 
-/* ---------- Разметка ---------- */
-function buildRows(){
-  const tbody = document.getElementById('rows');
-  tbody.innerHTML='';
-  for(const d of defs){
-    const tr = document.createElement('tr'); tr.dataset.id = d.id;
+          el.innerHTML = `
+            <td>${row.title}</td>
+            <td>${price? money(price) + (row.fixed?'':' / шт'): '—'}</td>
+            <td></td>
+            <td>${row.unit}</td>
+            <td>${money(rowSum)}</td>
+            <td>${money(rowVat)}</td>
+            <td>${money(rowSum+rowVat)}</td>
+          `;
+          el.children[2].appendChild(qty);
+          el.dataset.sum=rowSum; el.dataset.vat=rowVat;
+        }
 
-    const tdName = document.createElement('td');
-    tdName.innerHTML = `<div class="srv-name">${d.name}</div>`;
-
-    const tdPrice = document.createElement('td'); tdPrice.className='hide-sm';
-    tdPrice.innerHTML = `<span class="hint" data-price></span>`;
-
-    const tdQty = document.createElement('td');
-    const inp = document.createElement('input'); inp.type='number'; inp.min='0'; inp.step='1'; inp.value = 0;
-    if(d.qty==='kmQty'){ inp.value = state.kmQty; }
-    if(d.editable===false && d.qty!=='kmQty') inp.placeholder='0';
-    inp.addEventListener('input', ()=>{ onQtyChange(d, inp.value) });
-    tdQty.appendChild(inp);
-
-    const tdUnit = document.createElement('td'); tdUnit.className='hide-sm'; tdUnit.textContent = d.unit || '';
-
-    const tdSum = document.createElement('td'); tdSum.innerHTML = `<b data-sum>0</b>`;
-    const tdVat = document.createElement('td'); tdVat.className='hide-sm'; tdVat.innerHTML = `<span data-vat>0</span>`;
-    const tdTot = document.createElement('td'); tdTot.className='hide-sm'; tdTot.innerHTML = `<span data-total>0</span>`;
-
-    tr.append(tdName, tdPrice, tdQty, tdUnit, tdSum, tdVat, tdTot);
-    tbody.appendChild(tr);
-  }
-}
-
-function onQtyChange(def, val){
-  const n = Math.max(0, parseInt(val||'0',10));
-  if(def.qty==='kmQty') state.kmQty = n;
-  state.items = defs.map(d=>({
-    id:d.id, type:d.type, unit:d.unit,
-    price:d.price(),
-    qty:(d.qty==='kmQty')? state.kmQty : (d.id===def.id? n : currentQty(d.id))
-  }));
-  recalc();
-}
-
-function currentQty(id){
-  const tr = document.querySelector(`tr[data-id="${id}"]`);
-  if(!tr) return 0;
-  const inp = tr.querySelector('input');
-  return Math.max(0, parseInt(inp.value||'0',10));
-}
-
-function updatePriceCells(){
-  for(const d of defs){
-    const tr = document.querySelector(`tr[data-id="${d.id}"]`);
-    if(!tr) continue;
-    const p = d.price();
-    const pcs = tr.querySelector('[data-price]');
-    pcs.textContent = d.type==='per_unit' ? `${fmt(p)} / шт` : fmt(p);
-  }
-}
-
-function estimateLaborRub(){
-  const k = state.kmQty/1000.0; let h = BASE_H + PER_1000_KM_H*k;
-  if(currentQty('apply')>0) h += APPL_H*k;
-  if(currentQty('print')>0) h += PRINT_H*k;
-  if(currentQty('pack')>0)  h += PACK_H*k;
-  if(currentQty('tpl')>0)   h += TPL_H;
-  if(currentQty('reg')>0)   h += REG_H;
-  if(currentQty('pdf_labels')>0 && PDF_H>0) h += PDF_H*k;
-  return h*hourlyRate();
-}
-
-function recalc(){
-  state.items = defs.map(d=>({ id:d.id, type:d.type, unit:d.unit, price:d.price(), qty: (d.qty==='kmQty')? state.kmQty : currentQty(d.id) }));
-  updatePriceCells();
-
-  let visibleSumRub = 0;
-  for(const it of state.items){
-    const amount = (it.type==='per_unit') ? (it.price * it.qty) : (it.price * Math.min(1, it.qty));
-    visibleSumRub += amount;
-
-    const tr = document.querySelector(`tr[data-id="${it.id}"]`);
-    if(!tr) continue;
-    const vat = amount * state.vat;
-    const tot = amount + vat;
-    tr.querySelector('[data-sum]').textContent   = fmt(amount);
-    tr.querySelector('[data-vat]').textContent   = fmt(vat);
-    tr.querySelector('[data-total]').textContent = fmt(tot);
-  }
-
-  const labor = estimateLaborRub();
-  const withLabor = visibleSumRub + labor;
-  const marginAmt = withLabor * state.margin;
-  const net  = withLabor + marginAmt;
-  const vat  = net * state.vat;
-  const gross = net + vat;
-
-  state._totals = { net, vat, gross, visibleSumRub, labor, withLabor, marginAmt };
-
-  document.getElementById('sumNet').textContent   = fmt(net);
-  document.getElementById('sumVat').textContent   = fmt(vat);
-  document.getElementById('sumGross').textContent = fmt(gross);
-
-  document.getElementById('grandTotal').textContent = fmt(gross);
-  document.getElementById('grandTax').textContent   = `в т.ч. НДС ${fmt(vat)}`;
-}
-
-/* ---------- Курсы ЦБ РФ (ежедневно) ---------- */
-async function fetchRates(){
-  try{
-    const resp = await fetch('https://www.cbr-xml-daily.ru/daily_json.js', {cache:'no-store'});
-    const data = await resp.json();
-    // значения даны как RUB за 1 единицу валюты
-    state.rates.USD = data.Valute.USD.Value;
-    state.rates.EUR = data.Valute.EUR.Value;
-    state.rates.CNY = data.Valute.CNY.Value;
-    const date = new Date(data.Date);
-    document.getElementById('ratesView').textContent =
-      `USD ${state.rates.USD.toFixed(2)} • EUR ${state.rates.EUR.toFixed(2)} • CNY ${state.rates.CNY.toFixed(2)} от ${date.toLocaleDateString('ru-RU')}`;
-    recalc();
-  }catch(e){
-    document.getElementById('ratesView').textContent = 'недоступно';
-    console.warn('Rates fetch failed', e);
-  }
-}
-
-/* ---------- Привязка UI ---------- */
-function bindGlobals(){
-  const vatLabel = document.getElementById('vatLabel');
-  const currencySel = document.getElementById('currencySel');
-  const currencyNote = document.getElementById('currencyNote');
-
-  state.kmQty = 0; state.currency='RUB';
-  vatLabel.textContent = `${Math.round(state.vat*100)}%`;
-  currencyNote.textContent = 'Отображение сумм в выбранной валюте (по умолчанию RUB)';
-
-  currencySel.addEventListener('change', ()=>{ state.currency = currencySel.value; recalc(); });
-  document.getElementById('btnRefresh').addEventListener('click', fetchRates);
-}
-
-/* ---------- Telegram Mini App ---------- */
-function hydrateTelegram(){
-  try{
-    const tg = window.Telegram?.WebApp; if(!tg) return;
-    tg.ready();
-    document.body.style.background = tg.themeParams.bg_color || getComputedStyle(document.documentElement).getPropertyValue('--bg');
-    tg.MainButton.setText('Отправить расчёт');
-    tg.MainButton.onClick(() => {
-      recalc();
-      const itemsDetailed = state.items.map(it => {
-        const amount = (it.type === 'per_unit') ? (it.price * it.qty) : (it.price * Math.min(1, it.qty));
-        return { id: it.id, unit: it.unit, type: it.type, price: it.price, qty: it.qty, amount };
+        redrawRow(tr,r);
+        tbody.appendChild(tr);
       });
-      const payload = {
-        kmQty: state.kmQty,
-        currency: state.currency,
-        rates: state.rates,
-        vat_rate: state.vat,
-        margin_rate: state.margin,
-        items: itemsDetailed,
-        totals: { ...state._totals }
-      };
-      tg.sendData(JSON.stringify(payload));
-    });
-    tg.MainButton.show();
-  }catch(e){/* noop */}
-}
+      recalc();
+    }
 
-/* ---------- init ---------- */
-buildRows();
-bindGlobals();
-recalc();
-fetchRates();
-hydrateTelegram();
-</script>
+    function recalc(){
+      let sum=0,vat=0;
+      tbody.querySelectorAll('tr').forEach(tr=>{
+        sum+=Number(tr.dataset.sum||0); vat+=Number(tr.dataset.vat||0);
+      });
+      document.getElementById('sumNoVat').textContent = money(sum);
+      document.getElementById('sumVat').textContent   = money(vat);
+      document.getElementById('sumTotal').textContent = money(sum+vat);
+    }
+
+    draw();
+
+    // кнопка
+    document.getElementById('btnCalc').onclick = ()=>{
+      try{ window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('soft'); }catch(e){}
+      // при желании отправь данные в бота:
+      // Telegram.WebApp.sendData(JSON.stringify({rows}));
+      alert('Расчёт готов. Подключи отправку в бота через WebAppData, если нужно.');
+    };
+  </script>
 </body>
 </html>
