@@ -1,50 +1,61 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>CT Mentor — Калькулятор</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<style>
-  :root{
-    --bg:#F3F4F6;--card:#fff;--line:#E2E8F0;--text:#0F172A;--muted:#64748B;--accent:#F97316;
-    --r:16px;--shadow:0 12px 36px rgba(2,6,23,.10);--font:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif
-  }
-  [data-theme="dark"]{
-    --bg:#0B1220;--card:#0F172A;--line:#1F2937;--text:#E5E7EB;--muted:#9CA3AF;--shadow:0 12px 36px rgba(0,0,0,.35)
-  }
-  html{visibility:hidden}
-  html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:var(--font)}
-  .wrap{min-height:100dvh;display:grid;place-items:start center;padding:20px}
-  .panel{width:min(860px,96vw);background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
-  .head{display:flex;gap:12px;align-items:start;justify-content:space-between;padding:20px 20px 8px}
-  .h-title{font-size:20px;line-height:1.2;margin:0}
-  .sub{color:var(--muted);font-size:13px;margin:4px 0 0}
-  .btn-primary{background:var(--accent);color:#fff;border:none;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer;white-space:nowrap}
-  .controls{display:flex;gap:12px;flex-wrap:wrap;padding:12px 20px 10px}
-  .chip{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--card);display:inline-flex;align-items:center;gap:8px}
-  select,input{font:inherit;color:inherit;background:transparent;border:none;outline:none}
-  .rates{padding:0 20px 8px}
-  .rates .badge{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:8px 12px;background:var(--card);font-size:13px}
-  .actions{padding:8px 20px 14px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
-  .actions a{font-size:13px;color:var(--muted);text-decoration:none;border-bottom:1px dashed currentColor}
-  .tbl-wrap{border-top:1px solid var(--line);background:var(--card);overflow:auto}
-  table{width:980px;border-collapse:collapse} /* будет горизонтальный скролл на узких экранах */
-  th,td{border-bottom:1px solid var(--line);padding:14px 12px;font-size:14px}
-  th{background:#F8FAFC;color:#334155;text-align:left;position:sticky;top:0}
-  td.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
-  .qty{width:88px}
-  .qty input{width:100%;height:40px;border:1.5px solid #FDAE6B;border-radius:12px;padding:0 10px;text-align:center}
-  .foot{padding:16px 20px;display:grid;gap:10px}
-  .pill{display:flex;justify-content:space-between;align-items:center;border-radius:14px;background:var(--accent);color:#fff;padding:12px 16px;font-weight:800}
-  .pill.muted{background:#0f172a0d;color:var(--text);border:1px solid var(--line);font-weight:700}
-  .help{padding:0 20px 16px;color:var(--muted);font-size:12px}
-  @media (max-width:480px){
-    .h-title{font-size:18px}
-    th,td{padding:12px 10px;font-size:13px}
-    .qty{width:78px}
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>CT Mentor — Калькулятор</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root{
+      --bg:#F3F4F6;--card:#fff;--line:#E2E8F0;--text:#0F172A;--muted:#64748B;--accent:#F97316;
+      --r:16px;--shadow:0 12px 36px rgba(2,6,23,.10);--font:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif
+    }
+    [data-theme="dark"]{
+      --bg:#0B1220;--card:#0F172A;--line:#1F2937;--text:#E5E7EB;--muted:#9CA3AF;--shadow:0 12px 36px rgba(0,0,0,.35)
+    }
+    html{visibility:hidden}
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:var(--font)}
+    .wrap{min-height:100dvh;display:grid;place-items:start center;padding:20px}
+
+    .panel{width:min(1100px,96vw);background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+    .head{display:flex;gap:12px;align-items:start;justify-content:space-between;padding:20px 20px 8px}
+    .h-title{font-size:20px;line-height:1.2;margin:0}
+    .sub{color:var(--muted);font-size:13px;margin:4px 0 0}
+    .btn-primary{background:var(--accent);color:#fff;border:none;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer;white-space:nowrap}
+    .btn-primary[disabled]{opacity:.6;cursor:not-allowed}
+
+    .controls{display:flex;gap:12px;flex-wrap:wrap;padding:12px 20px 10px}
+    .chip{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--card);display:inline-flex;align-items:center;gap:8px}
+    select,input{font:inherit;color:inherit;background:transparent;border:none;outline:none}
+
+    .rates{padding:0 20px 8px}
+    .rates .badge{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:8px 12px;background:var(--card);font-size:13px}
+
+    .actions{padding:8px 20px 14px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+    .actions button{cursor:pointer}
+    .actions a{font-size:13px;color:var(--muted);text-decoration:none;border-bottom:1px dashed currentColor}
+
+    .tbl-wrap{border-top:1px solid var(--line);background:var(--card);overflow:auto}
+    table{width:100%; min-width:980px; border-collapse:collapse}
+    th,td{border-bottom:1px solid var(--line);padding:14px 12px;font-size:14px;vertical-align:middle}
+    th{background:#F8FAFC;color:#334155;text-align:left;position:sticky;top:0}
+    td.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+    .qty{width:92px}
+    .qty input{width:100%;height:40px;border:1.5px solid #FDAE6B;border-radius:12px;padding:0 10px;text-align:center}
+    .c-title{line-height:1.25}
+
+    .summary{padding:16px 20px;display:grid;gap:10px}
+    .pill{display:flex;justify-content:space-between;align-items:center;border-radius:14px;background:var(--accent);color:#fff;padding:12px 16px;font-weight:800}
+    .pill.muted{background:#0f172a0d;color:var(--text);border:1px solid var(--line);font-weight:700}
+
+    .help{padding:0 20px 16px;color:var(--muted);font-size:12px}
+
+    @media (max-width:480px){
+      .h-title{font-size:18px}
+      th,td{padding:12px 10px;font-size:13px}
+      .qty{width:78px}
+    }
+  </style>
 </head>
 <body>
 <div class="wrap">
@@ -54,15 +65,14 @@
         <h1 class="h-title">Калькулятор услуг по маркировке</h1>
         <div class="sub">Отображение сумм в выбранной валюте (по умолчанию RUB)</div>
       </div>
-      <button id="btnSend" class="btn-primary">Получить расчёт</button>
+      <button id="btn-make-pdf" class="btn-primary" disabled>Получить расчёт</button>
     </div>
 
     <div class="controls">
-      <div class="chip">Ставка НДС:
-        <strong id="vatLabel">20%</strong>
-      </div>
-      <div class="chip">Валюта:
-        <select id="currency">
+      <div class="chip">Ставка НДС: <strong id="vat">20%</strong></div>
+      <div class="chip">
+        Валюта:
+        <select id="currency" aria-label="Выбор валюты">
           <option value="RUB">RUB</option>
           <option value="USD">USD</option>
           <option value="EUR">EUR</option>
@@ -72,99 +82,127 @@
     </div>
 
     <div class="rates">
-      <span id="rates" class="badge">Курсы ЦБ РФ: USD 83.61 · EUR 97.68 · CNY 11.68 от 27.09.2025</span>
+      <span id="rates" class="badge">Курсы ЦБ РФ: USD — · EUR — · CNY —</span>
     </div>
 
     <div class="actions">
-      <button id="btnRefresh" class="chip" style="cursor:pointer"><strong>Обновить</strong></button>
+      <button id="btnRefresh" class="chip"><strong>Обновить</strong></button>
       <a href="#" id="changeEmail">сменить e-mail</a>
     </div>
 
     <div class="tbl-wrap">
-      <table id="tbl">
+      <table>
         <thead>
-          <tr>
-            <th style="width:48%">НАИМЕНОВАНИЕ</th>
-            <th style="width:12%">КОЛИЧЕСТВО</th>
-            <th style="width:10%">ЕД.</th>
-            <th style="width:10%">СУММА</th>
-            <th style="width:10%">НАЛОГ</th>
-            <th style="width:10%">ИТОГО</th>
-          </tr>
+        <tr>
+          <th style="width:44%">НАИМЕНОВАНИЕ</th>
+          <th style="width:12%">СТОИМОСТЬ</th>
+          <th style="width:12%">КОЛИЧЕСТВО</th>
+          <th style="width:10%">ЕД. ИЗМЕРЕНИЯ</th>
+          <th style="width:8%">СУММА</th>
+          <th style="width:7%">НАЛОГ</th>
+          <th style="width:7%">ИТОГО</th>
+        </tr>
         </thead>
         <tbody id="rows"></tbody>
       </table>
     </div>
 
-    <div class="foot">
+    <div class="summary">
       <div class="pill muted"><span>Без НДС</span><span id="sumNoVat">0,00 ₽</span></div>
       <div class="pill muted"><span>НДС</span><span id="sumVat">0,00 ₽</span></div>
       <div class="pill"><span>ИТОГО</span><span id="sumTotal">0,00 ₽</span></div>
     </div>
 
-    <div class="help">PDF придёт в этот чат, а также на указанный вами e-mail.</div>
+    <div class="help">PDF придёт в этот чат, а при указанном e-mail — ещё и на почту.</div>
   </div>
 </div>
 
 <script>
+  // Telegram bootstrap
   const tg = window.Telegram?.WebApp;
   tg?.expand?.(); tg?.ready?.();
   document.documentElement.setAttribute('data-theme', tg?.colorScheme === 'dark' ? 'dark' : 'light');
   requestAnimationFrame(()=>document.documentElement.style.visibility='visible');
 
-  // простая модель
+  // CloudStorage с фолбэком
+  const storage = {
+    get(key){return new Promise(res=>{
+      if(tg?.CloudStorage?.getItem){ tg.CloudStorage.getItem(key, v=>res(v??'')); }
+      else { res(localStorage.getItem(key)??''); }
+    })},
+    set(key,val){return new Promise(res=>{
+      if(tg?.CloudStorage?.setItem){ tg.CloudStorage.setItem(key,val,()=>{ try{localStorage.setItem(key,val)}catch{}; res(); }); }
+      else { try{localStorage.setItem(key,val)}catch{}; res(); }
+    })},
+    del(key){return new Promise(res=>{
+      if(tg?.CloudStorage?.removeItem){ tg.CloudStorage.removeItem(key,()=>{ try{localStorage.removeItem(key)}catch{}; res(); }); }
+      else { try{localStorage.removeItem(key)}catch{}; res(); }
+    })}
+  };
   const EMAIL_KEY='ctm_email';
-  const EMAIL_RE=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+  const CURR_KEY='ctm_currency';
+
+  // ---------- Модель ----------
   const state = {
     vat: 0.20,
     currency: 'RUB',
-    rates: {USD:83.61, EUR:97.68, CNY:11.68}, // подставьте ваши
+    rates: {USD: 83.61, EUR: 97.68, CNY: 11.68}, // RUB за 1 USD/EUR/CNY
     items: [
-      {title:'Получение GTIN и КМ (контракт агента)', price:0.60, unit:'шт', qty:0},
-      {title:'Формирование PDF с КМ (если контракт агента — бесплатно)', price:30.00, unit:'шт', qty:0},
-      {title:'Подключение МЧД, получение GTIN и КМ в ЛК клиента', price:15000.00, unit:'фикс', qty:1},
-      {title:'Консультация по вопросам маркировки, УПД', price:2000.00, unit:'ч', qty:0},
-      {title:'Пакетирование', price:1.50, unit:'шт', qty:0},
-      {title:'Создание шаблона этикеток', price:2000.00, unit:'фикс', qty:0},
+      { title:'Получение GTIN и КМ (контракт агента)',                          unit:'шт',  baseRub:0.60,   qty:0 },
+      { title:'Формирование PDF с КМ (если контракт агента — бесплатно)',       unit:'шт',  baseRub:3.00,   qty:0 },
+      { title:'Подключение МЧД, получение GTIN и КМ в ЛК клиента',              unit:'фикс',baseRub:15000,  qty:0 },
+      { title:'Консультация по вопросам маркировки, УПД',                       unit:'ч',   baseRub:2500,   qty:0 },
+      { title:'Пакетирование',                                                  unit:'шт',  baseRub:1.50,   qty:0 },
+      { title:'Создание шаблона этикеток',                                      unit:'фикс',baseRub:2000,   qty:0 },
+      { title:'Оформление карточек в НКТ',                                      unit:'шт',  baseRub:2.00,   qty:0 },
+      { title:'Регистрация в ЧЗ/GS1 РУС',                                       unit:'фикс',baseRub:15000,  qty:0 },
     ]
   };
 
+  // --- DOM ---
   const elRows = document.getElementById('rows');
   const elCur  = document.getElementById('currency');
   const elNoV  = document.getElementById('sumNoVat');
   const elVat  = document.getElementById('sumVat');
   const elTot  = document.getElementById('sumTotal');
+  const elRates= document.getElementById('rates');
+  const calcBtn= document.getElementById('btn-make-pdf');
 
-  function curSign(){ return {RUB:'₽',USD:'$',EUR:'€',CNY:'¥'}[state.currency] || state.currency; }
-  function fmt(n){ return (n||0).toLocaleString('ru-RU', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' ' + curSign(); }
+  // --- Utils ---
+  function sign(){ return {RUB:'₽', USD:'$', EUR:'€', CNY:'¥'}[state.currency] || state.currency; }
+  function fmt(n){ return (n||0).toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2})+' '+sign(); }
+  function rubTo(cur, rub){
+    if (cur==='RUB') return rub;
+    const k = state.rates[cur];
+    return k ? rub / k : rub;
+  }
+  function priceInCur(baseRub){ return rubTo(state.currency, baseRub); }
 
-  function recalc(){
-    let sub=0, tax=0;
-    [...elRows.children].forEach((tr, i)=>{
-      const qty = Number(tr.querySelector('input').value || 0);
-      state.items[i].qty = qty;
-      const price = state.items[i].price;
-      const sum = price * qty;
-      const vat = sum * state.vat;
-      const tot = sum + vat;
-      tr.querySelector('.sum').textContent = fmt(sum);
-      tr.querySelector('.vat').textContent = fmt(vat);
-      tr.querySelector('.tot').textContent = fmt(tot);
-      sub += sum; tax += vat;
-    });
-    elNoV.textContent = fmt(sub);
-    elVat.textContent = fmt(tax);
-    elTot.textContent = fmt(sub+tax);
+  function setRatesLabel() {
+    const d = new Date();
+    const ds = d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric'});
+    elRates.textContent =
+      `Курсы ЦБ РФ: USD ${state.rates.USD.toFixed(2)} · EUR ${state.rates.EUR.toFixed(2)} · CNY ${state.rates.CNY.toFixed(2)} от ${ds}`;
+  }
+
+  function toggleCalcBtn(){
+    const has = state.items.some(x => Number(x.qty) > 0);
+    calcBtn.disabled = !has;
+    calcBtn.style.opacity = has ? 1 : .6;
   }
 
   function render(){
-    elRows.innerHTML='';
-    state.items.forEach((it, idx)=>{
-      const tr=document.createElement('tr');
+    elRows.innerHTML = '';
+    state.items.forEach((it, i)=>{
+      const price = priceInCur(it.baseRub);
+      const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${it.title}</td>
-        <td class="qty"><input type="number" min="0" step="1" value="${it.qty}" data-i="${idx}"></td>
-        <td>${it.unit}</td>
+        <td class="c-title">${it.title}</td>
+        <td class="num c-unitprice" data-base="${it.baseRub}">${fmt(price)}</td>
+        <td class="qty c-qty">
+          <input aria-label="Количество: ${it.title}" type="number" min="0" step="${it.unit==='ч' ? '0.5':'1'}" inputmode="numeric" value="${it.qty}">
+        </td>
+        <td class="c-unit">${it.unit}</td>
         <td class="num sum">0</td>
         <td class="num vat">0</td>
         <td class="num tot">0</td>`;
@@ -173,44 +211,140 @@
     recalc();
   }
 
-  // init
-  render();
-  elRows.addEventListener('input', (e)=>{ if(e.target.matches('input')) recalc(); });
-  elCur.onchange = ()=>{ state.currency = elCur.value; recalc(); };
-  document.getElementById('btnRefresh').onclick = ()=>{ recalc(); };
+  function recalc(){
+    let sub=0, tax=0;
+    [...elRows.rows].forEach((tr, idx)=>{
+      const it  = state.items[idx];
+      const qty = Number(tr.querySelector('.c-qty input').value || 0);
+      it.qty = qty;
 
-  // сменить e-mail
-  document.getElementById('changeEmail').onclick=(e)=>{
+      const price = priceInCur(it.baseRub);
+      const s  = price * qty;
+      const v  = s * state.vat;
+      const t  = s + v;
+
+      tr.querySelector('.sum').textContent = fmt(s);
+      tr.querySelector('.vat').textContent = fmt(v);
+      tr.querySelector('.tot').textContent = fmt(t);
+
+      sub += s; tax += v;
+    });
+    elNoV.textContent = fmt(sub);
+    elVat.textContent = fmt(tax);
+    elTot.textContent = fmt(sub + tax);
+    toggleCalcBtn();
+  }
+
+  // --- init ---
+  (async ()=>{
+    // восстановим валюту
+    try{
+      const savedCur = (await storage.get(CURR_KEY)) || '';
+      if (['RUB','USD','EUR','CNY'].includes(savedCur)) {
+        state.currency = savedCur;
+        elCur.value = savedCur;
+      }
+    }catch{}
+    setRatesLabel();
+    render();
+    // автообновим курсы при старте
+    fetchRates(true);
+  })();
+
+  // --- events ---
+  elRows.addEventListener('input', e=>{ if(e.target.matches('input')) recalc(); });
+
+  elCur.addEventListener('change', async ()=>{
+    state.currency = elCur.value;
+    await storage.set(CURR_KEY, state.currency);
+    document.querySelectorAll('.c-unitprice').forEach(el=>{
+      const base = Number(el.dataset.base||0);
+      el.textContent = fmt(priceInCur(base));
+    });
+    recalc();
+    tg?.showToast?.('Валюта: ' + state.currency);
+  });
+
+  document.getElementById('btnRefresh').addEventListener('click', ()=>fetchRates(false));
+
+  document.getElementById('changeEmail').addEventListener('click', async (e)=>{
     e.preventDefault();
-    localStorage.removeItem(EMAIL_KEY);
-    tg?.openLink?.(new URL('./auth.html', location.href).toString(), {try_instant_view:true});
-  };
+    await storage.del(EMAIL_KEY);
+    const url = new URL('./auth.html', location.href).toString();
+    tg?.openLink?.(url, {try_instant_view:true});
+  });
 
-  // отправка
-  document.getElementById('btnSend').onclick = ()=>{
-    const email = (localStorage.getItem(EMAIL_KEY)||'').trim().toLowerCase();
-    if(!EMAIL_RE.test(email)){
-      tg?.openLink?.(new URL('./auth.html', location.href).toString(), {try_instant_view:true});
-      return;
+  // --- CBR rates ---
+  async function fetchRates(silent){
+    const btn = document.getElementById('btnRefresh');
+    if (!silent){ btn.disabled = true; btn.innerHTML = '<strong>Обновляю…</strong>'; }
+    try{
+      const r = await fetch('https://www.cbr-xml-daily.ru/daily_json.js', {cache:'no-store'});
+      const j = await r.json();
+      state.rates = {
+        USD: j?.Valute?.USD?.Value ?? state.rates.USD,
+        EUR: j?.Valute?.EUR?.Value ?? state.rates.EUR,
+        CNY: j?.Valute?.CNY?.Value ?? state.rates.CNY,
+      };
+      setRatesLabel();
+      // перерисуем цены за единицу
+      document.querySelectorAll('.c-unitprice').forEach(el=>{
+        const base = Number(el.dataset.base||0);
+        el.textContent = fmt(priceInCur(base));
+      });
+      recalc();
+      if (!silent) tg?.showToast?.('Курсы обновлены');
+    }catch(e){
+      if (!silent) tg?.showAlert?.('Не удалось обновить курсы. Проверьте интернет.');
+    }finally{
+      if (!silent){ btn.disabled=false; btn.innerHTML = '<strong>Обновить</strong>'; }
     }
-    const payload = {
+  }
+
+  // --- Prepare payload & send ---
+  async function collectPayload(){
+    const email = (await storage.get(EMAIL_KEY)).trim();
+    const rows = [];
+    document.querySelectorAll('#rows tr').forEach(tr=>{
+      rows.push({
+        title: tr.querySelector('.c-title')?.textContent?.trim() || '',
+        price: Number(tr.querySelector('.c-unitprice')?.dataset.base || 0), // базовая цена в RUB (на сервере есть валюта?)
+        // В PDF нужны текущие цены в выбранной валюте:
+        price_cur: (()=>{ const base = Number(tr.querySelector('.c-unitprice')?.dataset.base||0); return priceInCur(base); })(),
+        qty:   Number(tr.querySelector('.c-qty input')?.value || 0),
+        unit:  tr.querySelector('.c-unit')?.textContent?.trim() || 'шт',
+      });
+    });
+    return {
       email,
       currency: state.currency,
-      vat: '20%',
-      rates: `USD ${state.rates.USD} · EUR ${state.rates.EUR} · CNY ${state.rates.CNY}`,
-      rows: state.items.map(it=>({title:it.title, price:it.price, qty:it.qty, unit:it.unit})),
+      vat: document.getElementById('vat').textContent.trim(),
+      rates: elRates.textContent.trim(),
+      rows,
+      ts: Date.now()
     };
-    try{
-      tg?.HapticFeedback?.impactOccurred('medium');
-      tg?.sendData?.(JSON.stringify({ type:'order', payload }));
-      tg?.showAlert?.('Отправлено в бот, PDF скоро придёт.');
-    }catch(err){
-      console.error(err);
-      tg?.showAlert?.('Не удалось отправить расчёт: '+ (err?.message||err));
-    }
-  };
+  }
 
-  // общие хелперы
+  calcBtn.addEventListener('click', async ()=>{
+    try{
+      const payload = await collectPayload();
+      if(!payload.email){
+        tg?.showToast?.('PDF придёт в чат. Укажите e-mail (ссылка рядом с «Обновить»).');
+      }
+      calcBtn.disabled = true; calcBtn.textContent = 'Отправляю…';
+      tg?.HapticFeedback?.impactOccurred?.('medium');
+      tg?.sendData?.(JSON.stringify({type:'order', payload}));
+      tg?.showToast?.('Отправлено боту');
+      // setTimeout(()=>tg?.close?.(), 400); // при желании закрывать
+    }catch(err){
+      tg?.showAlert?.('Не удалось отправить: ' + (err?.message || err));
+    }finally{
+      recalc(); // вернёт правильное состояние disabled
+      calcBtn.textContent = 'Получить расчёт';
+    }
+  });
+
+  // страховка
   window.addEventListener('error', e=>tg?.showAlert?.('Ошибка: '+e.message));
   window.addEventListener('unhandledrejection', e=>tg?.showAlert?.('Ошибка: '+(e.reason?.message||e.reason)));
 </script>
