@@ -1,29 +1,30 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>CT Mentor — Авторизация</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root{
-    --bg:#F3F4F6;--card:#fff;--line:#E2E8F0;--text:#0F172A;--muted:#475569;--accent:#F97316;
-    --r:16px;--shadow:0 12px 40px rgba(2,6,23,.10);--font:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif
+    --bg:#F3F4F6;--card:#fff;--line:#E2E8F0;--text:#0F172A;--muted:#64748B;--accent:#F97316;
+    --r:16px;--shadow:0 12px 40px rgba(2,6,23,.10);
+    --font:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif
   }
   [data-theme="dark"]{
-    --bg:#0B1220;--card:#0F172A;--line:#1F2937;--text:#E5E7EB;--muted:#9CA3AF;
-    --shadow:0 12px 40px rgba(0,0,0,.35)
+    --bg:#0B1220;--card:#0F172A;--line:#1F2937;--text:#E5E7EB;--muted:#9CA3AF;--shadow:0 12px 40px rgba(0,0,0,.35)
   }
-  html,body{margin:0;height:100%;background:var(--bg);font-family:var(--font);color:var(--text)}
+  html{visibility:hidden}  /* анти-FOUC: покажем после ready() */
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:var(--font)}
   .wrap{min-height:100dvh;display:grid;place-items:center;padding:24px}
   .card{width:min(420px,92vw);background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:28px}
   h1{margin:0 0 8px 0;font-size:22px}
   p{margin:0 0 18px 0;color:var(--muted)}
   .field{margin-bottom:12px}
   .label{font-size:13px;color:var(--muted);margin-bottom:6px}
-  .input{width:100%;height:44px;border:1px solid var(--line);border-radius:12px;padding:0 12px;font-size:15px;
-         background:var(--card);color:var(--text)}
-  .row{display:flex;gap:10px;align-items:center;margin-top:8px}
+  .input{width:100%;height:44px;border:1px solid var(--line);border-radius:12px;padding:0 12px;
+         background:var(--card);color:var(--text);font-size:15px}
+  .row{display:flex;gap:10px;align-items:flex-start;margin-top:8px}
   .btn{width:100%;height:46px;margin-top:14px;border:none;border-radius:12px;background:var(--accent);
        color:#fff;font-weight:700;cursor:pointer}
   .btn[disabled]{opacity:.6;cursor:not-allowed}
@@ -58,74 +59,36 @@
     </button>
 
     <div class="help">
-      <a href="#" id="logout" hidden>Сменить e-mail</a> •
-      <a href="https://t.me/OM_Cargo_Bot" target="_blank">Написать в поддержку</a><br>
-      <a href="https://consul96.github.io/privacypolicy.html" target="_blank">Политика конфиденциальности</a>
+      <a href="#" id="logout" hidden>Сменить e-mail</a> ·
+      <a href="https://t.me/OM_Cargo_Bot" target="_blank">Поддержка</a>
     </div>
   </div>
 </div>
 
 <script>
-  // Тема из Telegram
-  const scheme = (window.Telegram?.WebApp?.colorScheme || 'light');
+  const tg = window.Telegram?.WebApp;
+  const scheme = tg?.colorScheme || 'light';
   document.documentElement.setAttribute('data-theme', scheme === 'dark' ? 'dark' : 'light');
-  window.Telegram?.WebApp?.expand?.();
+  tg?.expand?.(); tg?.ready?.(); requestAnimationFrame(()=>document.documentElement.style.visibility='visible');
 
-  // Prefill e-mail из localStorage
-  const EMAIL_KEY = 'ctm_email';
-  const emailEl = document.getElementById('email');
-  const logoutEl = document.getElementById('logout');
-  const errEl = document.getElementById('err');
-  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+  const EMAIL_KEY='ctm_email', EMAIL_RE=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+  const emailEl=document.getElementById('email'), errEl=document.getElementById('err'), logoutEl=document.getElementById('logout');
 
-  const saved = (localStorage.getItem(EMAIL_KEY) || '').trim();
-  if (saved) {
-    emailEl.value = saved;
-    logoutEl.hidden = false;
-  }
-  emailEl.focus();
+  const saved=(localStorage.getItem(EMAIL_KEY)||'').trim(); if(saved){ emailEl.value=saved; logoutEl.hidden=false; }
+  emailEl.focus(); emailEl.addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById('go').click(); });
+  logoutEl.onclick=(e)=>{ e.preventDefault(); localStorage.removeItem(EMAIL_KEY); emailEl.value=''; logoutEl.hidden=true; emailEl.focus(); };
 
-  // Enter для сабмита
-  emailEl.addEventListener('keydown', (e)=>{
-    if (e.key === 'Enter') document.getElementById('go').click();
-  });
-
-  // Смена e-mail
-  logoutEl.onclick = (e)=>{
-    e.preventDefault();
-    localStorage.removeItem(EMAIL_KEY);
-    emailEl.value = '';
-    logoutEl.hidden = true;
-    emailEl.focus();
-  };
-
-  // Сабмит
-  document.getElementById('go').onclick = ()=>{
-    const raw = (emailEl.value||'').trim().toLowerCase();
-    const consent = document.getElementById('consent').checked;
-
-    errEl.style.display = 'none';
-    if (!EMAIL_RE.test(raw)) { errEl.style.display='block'; return; }
-    if (!consent) { alert('Нужно согласие на обработку данных.'); return; }
-
-    // Сохраняем
+  document.getElementById('go').onclick=()=>{
+    const raw=(emailEl.value||'').trim().toLowerCase();
+    const consent=document.getElementById('consent').checked;
+    errEl.style.display='none';
+    if(!EMAIL_RE.test(raw)){ errEl.style.display='block'; return; }
+    if(!consent){ alert('Нужно согласиться на обработку данных.'); return; }
     localStorage.setItem(EMAIL_KEY, raw);
 
-    // Пробрасываем initData для верификации на стороне бота
-    const initData = window.Telegram?.WebApp?.initData || '';
-    const url = new URL('./index.html', location.href);
-    url.searchParams.set('v','2');                 // анти-кэш
-    url.searchParams.set('from','auth');
-    if (initData) url.searchParams.set('tg', '1'); // флажок, что мы в WebApp
-
-    // Небольшой лоадер
-    const btn = document.getElementById('go');
-    document.getElementById('goText').style.display='none';
-    document.getElementById('spin').style.display='';
-    btn.setAttribute('disabled','disabled');
-
-    // Переход в калькулятор
-    location.href = url.toString();
+    const url=new URL('./index.html',location.href); url.searchParams.set('v','2'); url.searchParams.set('from','auth');
+    document.getElementById('go').disabled=true; document.getElementById('goText').style.display='none'; document.getElementById('spin').style.display='';
+    location.href=url.toString();
   };
 </script>
 </body>
