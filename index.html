@@ -14,31 +14,41 @@
       --r-md:12px; --r-lg:16px; --shadow-card:0 10px 30px rgba(2,6,23,.08);
     }
     html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--font)}
-    .wrap{min-height:100dvh;display:flex;justify-content:center;padding:clamp(12px,2.5vw,24px)}
-    .container{width:clamp(320px,96vw,1200px);background:var(--card);border:1px solid var(--line);
-      border-radius:var(--r-lg);box-shadow:var(--shadow-card);overflow:hidden}
-    .header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line)}
-    .h-left h1{margin:0;font-size:var(--fs-18)}
+    body{min-height:var(--app-height,100svh)}
+    .wrap{width:100%;min-height:var(--app-height,100svh);display:flex;justify-content:center;align-items:stretch;padding:clamp(12px,2.5vw,24px);
+      box-sizing:border-box;overflow:hidden}
+    .container{width:min(1200px,100%);min-width:320px;background:var(--card);border:1px solid var(--line);
+      border-radius:var(--r-lg);box-shadow:var(--shadow-card);overflow:hidden;display:flex;flex-direction:column}
+    .header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:16px 20px;border-bottom:1px solid var(--line)}
+    .h-left{flex:1 1 auto;min-width:0}
+    .h-left h1{margin:0;font-size:var(--fs-18);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .h-left small{display:block;margin-top:4px;color:var(--muted);font-size:var(--fs-12)}
     .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:var(--r-md);
-      background:var(--accent-500);border:1px solid var(--accent-500);color:#fff;font-weight:700;cursor:pointer}
+      background:var(--accent-500);border:1px solid var(--accent-500);color:#fff;font-weight:700;cursor:pointer;flex-shrink:0;white-space:nowrap}
+    .content{flex:1;display:flex;flex-direction:column;overflow:auto;background:#fff;min-height:0}
     .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:12px 20px;border-bottom:1px solid var(--line);background:#fff}
     .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:20px;background:var(--accent-weak);
       border:1px solid var(--line);font-size:var(--fs-12);font-weight:600;white-space:nowrap}
-    .toolbar .right{margin-left:auto;display:flex;gap:8px;align-items:center}
+    #ratesChip{flex:1 1 220px;min-width:0;overflow:hidden;text-overflow:ellipsis}
+    .toolbar .right{margin-left:auto;display:flex;gap:8px;align-items:center;flex-shrink:0}
     .select{height:34px;border:1px solid var(--accent-500);border-radius:12px;padding:0 10px;background:#fff}
     .link{color:var(--muted);text-decoration:underline;cursor:pointer;font-size:12px}
-    .table-wrap{overflow-x:auto}
-    .table{min-width:860px;width:100%;border-collapse:collapse;table-layout:fixed;font-size:var(--fs-14)}
+    .table-wrap{flex:1;min-height:0}
+    .table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:var(--fs-14)}
     .table thead th{background:var(--accent-weak);color:var(--muted);text-transform:uppercase;letter-spacing:.02em;
       padding:12px 14px;text-align:left;font-size:var(--fs-12);border-bottom:1px solid var(--line)}
-    .table tbody td{padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+    .table tbody td{padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:middle;word-break:break-word}
     .col-name{width:46%}.col-price{width:14%}.col-qty{width:12%}.col-unit{width:8%}.col-sum{width:8%}.col-vat{width:6%}.col-total{width:6%}
     .input{width:100%;height:36px;box-sizing:border-box;background:#fff;font-size:var(--fs-14);
       border-radius:var(--r-md);padding:0 10px;border:1px solid var(--accent-500)}
-    .totals{padding:16px 20px 24px;display:flex;justify-content:flex-end}
+    .totals{padding:16px 20px 24px;display:flex;justify-content:flex-end;gap:16px;background:#fff;flex-shrink:0;border-top:1px solid var(--line)}
     .totals-col{width:320px;display:grid;gap:8px}
     .badge{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-radius:10px;background:var(--accent-500);color:#fff;font-weight:700}
+    @media (max-width:768px){
+      .toolbar{padding:12px 16px}
+      .totals{padding:16px}
+      .totals-col{width:100%}
+    }
   </style>
 </head>
 <body>
@@ -52,56 +62,79 @@
         <button class="btn" id="btnCalc">Получить расчёт</button>
       </div>
 
-      <div class="toolbar">
-        <div class="chip">Ставка НДС: <strong id="chipVat">20%</strong></div>
+      <div class="content">
+        <div class="toolbar">
+          <div class="chip">Ставка НДС: <strong id="chipVat">20%</strong></div>
 
-        <div class="chip">Валюта:&nbsp;
-          <select id="currency" class="select">
-            <option value="RUB">RUB</option>
-            <option value="USD">USD</option>
-            <option value="EUR">EUR</option>
-            <option value="CNY">CNY</option>
-          </select>
+          <div class="chip">Валюта:&nbsp;
+            <select id="currency" class="select">
+              <option value="RUB">RUB</option>
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="CNY">CNY</option>
+            </select>
+          </div>
+
+          <div class="chip" id="ratesChip">Курсы ЦБ РФ: …</div>
+
+          <div class="right">
+            <span class="chip" id="btnRefresh" style="background:#fff">Обновить</span>
+            <span class="link" id="changeEmail">сменить e-mail</span>
+          </div>
         </div>
 
-        <div class="chip" id="ratesChip">Курсы ЦБ РФ: …</div>
-
-        <div class="right">
-          <span class="chip" id="btnRefresh" style="background:#fff">Обновить</span>
-          <span class="link" id="changeEmail">сменить e-mail</span>
+        <div class="table-wrap">
+          <table class="table" id="priceTable">
+            <colgroup>
+              <col class="col-name"><col class="col-price"><col class="col-qty">
+              <col class="col-unit"><col class="col-sum"><col class="col-vat"><col class="col-total">
+            </colgroup>
+            <thead>
+              <tr>
+                <th>Наименование</th><th>Стоимость</th><th>Количество</th>
+                <th>Ед. измерения</th><th>Сумма</th><th>Налог</th><th>Итого</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
         </div>
-      </div>
 
-      <div class="table-wrap">
-        <table class="table" id="priceTable">
-          <colgroup>
-            <col class="col-name"><col class="col-price"><col class="col-qty">
-            <col class="col-unit"><col class="col-sum"><col class="col-vat"><col class="col-total">
-          </colgroup>
-          <thead>
-            <tr>
-              <th>Наименование</th><th>Стоимость</th><th>Количество</th>
-              <th>Ед. измерения</th><th>Сумма</th><th>Налог</th><th>Итого</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-
-      <div class="totals">
-        <div class="totals-col">
-          <div class="badge"><span>Без НДС</span><strong id="sumNoVat">0 ₽</strong></div>
-          <div class="badge"><span>НДС</span><strong id="sumVat">0 ₽</strong></div>
-          <div class="badge"><span>ИТОГО</span><strong id="sumTotal">0 ₽</strong></div>
+        <div class="totals">
+          <div class="totals-col">
+            <div class="badge"><span>Без НДС</span><strong id="sumNoVat">0 ₽</strong></div>
+            <div class="badge"><span>НДС</span><strong id="sumVat">0 ₽</strong></div>
+            <div class="badge"><span>ИТОГО</span><strong id="sumTotal">0 ₽</strong></div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
 <script>
+  const tg = window.Telegram?.WebApp;
+  const rootEl = document.documentElement;
+  const EMAIL_KEY='ctm_email';
+  const MAIN_BUTTON_TEXT='Получить расчёт';
+  const mainButton = tg?.MainButton;
+
+  const syncViewportHeight=()=>{
+    const height = tg?.viewportStableHeight || window.innerHeight;
+    if(height){
+      rootEl.style.setProperty('--app-height', `${Math.round(height)}px`);
+    }
+  };
+
+  if(tg){
+    tg.ready?.();
+    tg.expand?.();
+    tg.onEvent?.('viewportChanged', syncViewportHeight);
+  }
+  syncViewportHeight();
+  window.addEventListener('resize', syncViewportHeight);
+
   // === auth guard: нужен email из авторизации ===
   const EMAIL_RE=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
-  let EMAIL = localStorage.getItem('ctm_email') || '';
+  let EMAIL = (localStorage.getItem(EMAIL_KEY) || '').trim().toLowerCase();
   if(!EMAIL || !EMAIL_RE.test(EMAIL)){
     // нет e-mail → уводим на авторизацию
     location.href = './auth.html';
@@ -110,12 +143,15 @@
   // смена e-mail прямо из калькулятора (по просьбе)
   document.getElementById('changeEmail').onclick = ()=>{
     const v = prompt('Введите e-mail для отправки расчётов', EMAIL||'');
-    if(v && EMAIL_RE.test(v)){
-      EMAIL = v.trim();
-      localStorage.setItem('ctm_email', EMAIL);
-      alert('E-mail сохранён');
-    }else if(v!==null){
-      alert('Некорректный e-mail');
+    if(v!==null){
+      const next = v.trim().toLowerCase();
+      if(next && EMAIL_RE.test(next)){
+        EMAIL = next;
+        localStorage.setItem(EMAIL_KEY, EMAIL);
+        alert('E-mail сохранён');
+      }else{
+        alert('Некорректный e-mail');
+      }
     }
   };
 
@@ -152,7 +188,9 @@
   }
   function updateRatesChip(){
     const chip = document.getElementById('ratesChip');
-    chip.textContent = `Курсы ЦБ РФ: USD ${rates.USD.toFixed(2)} • EUR ${rates.EUR.toFixed(2)} • CNY ${rates.CNY.toFixed(2)}${ratesDate?' от '+ratesDate:''}`;
+    const text = `Курсы ЦБ РФ: USD ${rates.USD.toFixed(2)} • EUR ${rates.EUR.toFixed(2)} • CNY ${rates.CNY.toFixed(2)}${ratesDate?' от '+ratesDate:''}`;
+    chip.textContent = text;
+    chip.title = text;
   }
 
   function draw(){
@@ -198,6 +236,11 @@
   }
 
   function collectPayload(){
+    const storedEmail = (localStorage.getItem(EMAIL_KEY) || EMAIL || '').trim().toLowerCase();
+    if(storedEmail && EMAIL_RE.test(storedEmail)){
+      EMAIL = storedEmail;
+    }
+
     const items=[];
     document.querySelectorAll('#priceTable tbody tr').forEach(tr=>{
       const title=tr.children[0].textContent.trim();
@@ -221,15 +264,32 @@
     };
   }
 
-  draw(); fetchRates();
+  const sendCalculation=()=>{
+    const payload=collectPayload();
+    const data=JSON.stringify(payload);
+    if(tg?.sendData){
+      tg.sendData(data);
+    }else{
+      console.log('Mini App payload', payload);
+      alert('Расчёт подготовлен. Откройте приложение Telegram, чтобы отправить данные боту.');
+    }
+  };
+
+  if(mainButton){
+    mainButton.setParams?.({text:MAIN_BUTTON_TEXT,color:'#F97316',text_color:'#FFFFFF'});
+    mainButton.setText?.(MAIN_BUTTON_TEXT);
+    mainButton.onClick?.(sendCalculation);
+    mainButton.enable?.();
+    mainButton.show?.();
+  }
+
+  draw();
+  updateRatesChip();
+  fetchRates();
   document.getElementById('currency').onchange=e=>{currency=e.target.value; recalcAll();};
   document.getElementById('btnRefresh').onclick=fetchRates;
 
-  document.getElementById('btnCalc').onclick=()=>{
-    const payload=collectPayload();
-    Telegram.WebApp.ready?.();
-    Telegram.WebApp.sendData(JSON.stringify(payload)); // бот сформирует PDF и отправит в чат + на e-mail
-  };
+  document.getElementById('btnCalc').onclick=sendCalculation;
 </script>
 </body>
 </html>
