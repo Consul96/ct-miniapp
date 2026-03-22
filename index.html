@@ -182,6 +182,33 @@
     .section{
       padding:16px 18px 2px;
     }
+    .tabs{
+      display:flex;
+      gap:10px;
+      padding:8px 18px 0;
+      flex-wrap:wrap;
+    }
+    .tab-btn{
+      appearance:none;
+      border:1.5px solid var(--stroke);
+      background:var(--field);
+      color:var(--muted);
+      border-radius:999px;
+      padding:10px 16px;
+      font:inherit;
+      font-weight:800;
+      cursor:pointer;
+      transition:.15s border-color ease, .15s background ease, .15s color ease;
+    }
+    .tab-btn.active{
+      background:var(--brand);
+      border-color:var(--brand);
+      color:#fff;
+      box-shadow:0 10px 25px rgba(255,106,0,.22);
+    }
+    .tab-panel[hidden]{
+      display:none !important;
+    }
     .section-head{
       display:flex;
       justify-content:space-between;
@@ -328,6 +355,7 @@
       .card{ border-radius:18px; }
       .header,
       .controls,
+      .tabs,
       .section,
       .totals{
         padding-left:14px;
@@ -461,6 +489,12 @@
       </div>
     </div>
 
+    <div class="tabs">
+      <button id="tabClient" class="tab-btn active" type="button">Для клиента</button>
+      <button id="tabManager" class="tab-btn" type="button">Расчёт и тарифы</button>
+    </div>
+
+    <div id="panelClient" class="tab-panel">
     <div class="section">
       <div class="section-head">
         <div>
@@ -647,12 +681,21 @@
         </div>
       </div>
     </div>
+    </div>
 
+    <div id="panelManager" class="tab-panel" hidden>
+    <div class="section">
+      <div class="section-head">
+        <div>
+          <div class="section-title">Расчёт и тарифы</div>
+          <div class="section-sub">Этот раздел нужен менеджеру: здесь видно, какие услуги включились в расчёт и по каким ставкам они посчитаны.</div>
+        </div>
+      </div>
     <div class="table-wrap">
       <table>
         <thead>
         <tr>
-          <th>СТАТЬЯ</th>
+          <th>УСЛУГА</th>
           <th>СТАВКА (RUB)</th>
           <th>КОЛ-ВО</th>
           <th>ЕД.</th>
@@ -664,6 +707,7 @@
         <tbody id="rows"></tbody>
       </table>
     </div>
+    </div>
 
     <div class="totals">
       <div class="box">
@@ -671,6 +715,7 @@
         <div class="row dim"><span>НДС</span><span id="sumVat">0,00 ₽</span></div>
         <div class="row total"><span>ИТОГО</span><span id="sumTotal">0,00 ₽</span></div>
       </div>
+    </div>
     </div>
 
     <div class="hint">PDF придёт в этот чат, а при указанном e-mail ещё и на почту. Объём услуг считается автоматически по параметрам партии.</div>
@@ -806,6 +851,10 @@
   const ratesState = document.getElementById('ratesState');
   const btnRates = document.getElementById('btnRates');
   const btnSend = document.getElementById('btnSend');
+  const tabClient = document.getElementById('tabClient');
+  const tabManager = document.getElementById('tabManager');
+  const panelClient = document.getElementById('panelClient');
+  const panelManager = document.getElementById('panelManager');
   const vatSel = document.getElementById('vat');
   const curSel = document.getElementById('currency');
   const emailInput = document.getElementById('emailInput');
@@ -838,6 +887,14 @@
 
   function setRatesText(dateText){
     ratesText.textContent = `Курсы ЦБ РФ: USD ${RATES.USD} • EUR ${RATES.EUR} • CNY ${RATES.CNY} от ${dateText}`;
+  }
+
+  function setActiveTab(tab){
+    const isClient = tab === 'client';
+    panelClient.hidden = !isClient;
+    panelManager.hidden = isClient;
+    tabClient.classList.toggle('active', isClient);
+    tabManager.classList.toggle('active', !isClient);
   }
 
   function showRatesState(message, isError = false){
@@ -912,15 +969,33 @@
     ratesState.replaceChildren(spinner);
 
     try{
-      const res = await fetch(`${API_BASE}/rates${force ? '?force=1' : ''}`, { cache:'no-store' });
-      const data = await res.json();
-      if (!res.ok || !data.ok) {
-        throw new Error(data.details || data.message || 'Неизвестная ошибка');
+      let nextRates;
+
+      try{
+        const res = await fetch(`${API_BASE}/rates${force ? '?force=1' : ''}`, { cache:'no-store' });
+        const data = await res.json();
+        if (!res.ok || !data.ok) {
+          throw new Error(data.details || data.message || 'Неизвестная ошибка');
+        }
+        nextRates = data.rates;
+      }catch(apiError){
+        const mirrorRes = await fetch('https://www.cbr-xml-daily.ru/daily_json.js', { cache:'no-store' });
+        if (!mirrorRes.ok) {
+          throw apiError;
+        }
+        const mirrorData = await mirrorRes.json();
+        nextRates = {
+          USD: Number(mirrorData?.Valute?.USD?.Value || 0),
+          EUR: Number(mirrorData?.Valute?.EUR?.Value || 0),
+          CNY: Number(mirrorData?.Valute?.CNY?.Value || 0),
+          RUB: 1,
+          date: new Date(mirrorData?.Date || Date.now()).toLocaleDateString('ru-RU')
+        };
       }
 
-      RATES = { ...RATES, ...data.rates };
-      localStorage.setItem('ctm_rates', JSON.stringify(data.rates));
-      setRatesText(data.rates.date);
+      RATES = { ...RATES, ...nextRates };
+      localStorage.setItem('ctm_rates', JSON.stringify(nextRates));
+      setRatesText(nextRates.date);
       showRatesState('обновлено');
       updateServiceRows();
     }catch(e){
@@ -1164,6 +1239,9 @@
     await loadRates(true);
   });
 
+  tabClient.addEventListener('click', () => setActiveTab('client'));
+  tabManager.addEventListener('click', () => setActiveTab('manager'));
+
   btnSend.addEventListener('click', async () => {
     const questionnaire = computeQuestionnaire();
     const rows = getCalculatedRows();
@@ -1269,6 +1347,7 @@
   syncQuestionnaireUI();
   buildServiceRows();
   updateServiceRows();
+  setActiveTab('client');
   hydrateEmail();
   checkApiAvailability();
   loadRates(false);
