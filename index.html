@@ -53,7 +53,7 @@
     }
 
     .header{
-      display:flex; align-items:center; gap:12px; padding:18px 18px 6px;
+      display:flex; align-items:flex-start; gap:12px; padding:18px 18px 6px; flex-wrap:wrap;
     }
     .title{
       font-size:20px; font-weight:800; letter-spacing:.2px;
@@ -77,6 +77,7 @@
       background:var(--field); color:var(--ink);
       border-radius:12px; padding:10px 12px; font-weight:700;
       transition:.15s border-color ease, .15s transform ease;
+      min-height:44px;
     }
     .select:focus,.input:focus{ border-color:var(--brand); }
     .btn{
@@ -98,6 +99,10 @@
     .link{ color:var(--muted); text-decoration:underline; cursor:pointer; }
 
     /* Table */
+    .table-wrap{
+      overflow-x:auto;
+      -webkit-overflow-scrolling:touch;
+    }
     table{ width:100%; border-collapse: collapse; }
     thead th{
       text-align:left; font-size:12px; color:var(--muted);
@@ -146,7 +151,104 @@
     }
     @keyframes r{ to{ transform: rotate(360deg); } }
 
-    .right{ margin-left:auto; display:flex; gap:10px; align-items:center; }
+    .right{ margin-left:auto; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+
+    @media (max-width: 860px){
+      body{ font-size:14px; }
+      .wrap{
+        margin: 0 auto 24px;
+        padding: 12px 10px calc(16px + env(safe-area-inset-bottom));
+      }
+      .card{ border-radius:18px; }
+      .header,
+      .controls,
+      .totals{
+        padding-left:14px;
+        padding-right:14px;
+      }
+      .right{
+        margin-left:0;
+        width:100%;
+        justify-content:flex-start;
+      }
+      .right > *{
+        flex:1 1 180px;
+      }
+      .chip,
+      .rates{
+        width:100%;
+      }
+      .chip{
+        justify-content:space-between;
+      }
+      .btn,
+      .select{
+        width:100%;
+        white-space:normal;
+      }
+      .table-wrap{
+        overflow:visible;
+      }
+      table,
+      tbody{
+        display:block;
+      }
+      thead{
+        display:none;
+      }
+      tbody{
+        padding: 0 12px 12px;
+      }
+      tbody tr{
+        display:grid;
+        gap:10px;
+        padding:14px;
+        margin-bottom:12px;
+        border:1px solid var(--stroke);
+        border-radius:16px;
+        background:var(--card);
+        box-shadow: var(--shadow);
+      }
+      tbody td{
+        padding:0;
+        border:none;
+        display:flex;
+        justify-content:space-between;
+        align-items:flex-start;
+        gap:12px;
+      }
+      tbody td::before{
+        content:attr(data-label);
+        color:var(--muted);
+        font-size:12px;
+        font-weight:800;
+        letter-spacing:.02em;
+        text-transform:uppercase;
+        flex:0 0 96px;
+      }
+      tbody td:first-child{
+        display:block;
+        font-size:16px;
+        font-weight:700;
+      }
+      tbody td:first-child::before{
+        content:none;
+      }
+      .qty{
+        width:min(140px, 100%);
+        margin-left:auto;
+      }
+      .totals{
+        justify-content:stretch;
+        padding-top:2px;
+      }
+      .totals .box{
+        width:100%;
+      }
+      .hint{
+        margin:8px 14px 16px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -181,7 +283,7 @@
       </div>
     </div>
 
-    <div style="padding: 10px 0 0;">
+    <div class="table-wrap" style="padding: 10px 0 0;">
       <table>
         <thead>
         <tr>
@@ -213,7 +315,10 @@
 <script>
   // ---------------- Data ----------------
   const tg = window.Telegram?.WebApp;
-  tg?.expand();
+  const API_BASE = '/api';
+  const EMAIL_KEY = 'ctm_email';
+  tg?.ready?.();
+  tg?.expand?.();
 
   const money = (n, cur) => (new Intl.NumberFormat('ru-RU', {
     minimumFractionDigits:2, maximumFractionDigits:2
@@ -235,7 +340,7 @@
 
   // state
   const state = {
-    email: localStorage.getItem('ctm_email') || '',
+    email: localStorage.getItem(EMAIL_KEY) || localStorage.getItem('email') || '',
     vat: localStorage.getItem('ctm_vat') || '20%',
     currency: localStorage.getItem('ctm_cur') || 'RUB',
     qty: JSON.parse(localStorage.getItem('ctm_qty') || '[]') || []
@@ -249,6 +354,8 @@
   const emailText= document.getElementById('emailText');
   const ratesText= document.getElementById('ratesText');
   const ratesState= document.getElementById('ratesState');
+  const btnRates = document.getElementById('btnRates');
+  const btnSend = document.getElementById('btnSend');
 
   const vatSel = document.getElementById('vat');
   const curSel = document.getElementById('currency');
@@ -259,9 +366,102 @@
 
   function priceInCurrency(priceRub, cur){
     if(cur==='RUB') return priceRub;
-    // RUB -> cur
     const rate = RATES[cur] || 1;
-    return priceRub / (1/RATES['RUB']) / (1/rate);
+    return priceRub / rate;
+  }
+
+  function normalizeEmail(value){
+    return (value || '').trim().toLowerCase();
+  }
+
+  function isValidEmail(value){
+    return !value || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  }
+
+  function updateEmailView(value){
+    emailText.textContent = value || '—';
+  }
+
+  function setRatesText(dateText){
+    ratesText.textContent =
+      `Курсы ЦБ РФ: USD ${RATES.USD} • EUR ${RATES.EUR} • CNY ${RATES.CNY} от ${dateText}`;
+  }
+
+  function showRatesState(message, isError = false){
+    ratesState.hidden = false;
+    ratesState.textContent = message;
+    ratesState.style.color = isError ? 'var(--warn)' : '';
+    setTimeout(()=>{ ratesState.hidden = true; }, 1500);
+  }
+
+  async function loadRates(force = false){
+    ratesState.hidden = false;
+    ratesState.textContent = '';
+    ratesState.style.color = '';
+    const spinner = document.createElement('span');
+    spinner.className='spin';
+    ratesState.appendChild(spinner);
+
+    try{
+      const res = await fetch(`${API_BASE}/rates${force ? '?force=1' : ''}`, { cache: 'no-store' });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        throw new Error(data.details || data.message || 'Неизвестная ошибка');
+      }
+
+      RATES = { ...RATES, ...data.rates };
+      localStorage.setItem('ctm_rates', JSON.stringify(data.rates));
+      setRatesText(data.rates.date);
+      showRatesState('обновлено');
+      render();
+    }catch(e){
+      const cached = localStorage.getItem('ctm_rates');
+      if (cached) {
+        try{
+          const parsed = JSON.parse(cached);
+          RATES = { ...RATES, ...parsed };
+          setRatesText(parsed.date || new Date().toLocaleDateString('ru-RU'));
+          render();
+        }catch(err){}
+      }
+      showRatesState('ошибка', true);
+      console.error(e);
+    }
+  }
+
+  async function persistEmail(value){
+    const normalized = normalizeEmail(value);
+    state.email = normalized;
+    updateEmailView(normalized);
+    localStorage.setItem(EMAIL_KEY, normalized);
+    localStorage.setItem('email', normalized);
+
+    if (tg?.CloudStorage?.setItem) {
+      try{
+        await tg.CloudStorage.setItem(EMAIL_KEY, normalized);
+        await tg.CloudStorage.setItem('email', normalized);
+      }catch(e){
+        console.warn('CloudStorage save failed', e);
+      }
+    }
+  }
+
+  async function hydrateEmail(){
+    if (!tg?.CloudStorage?.getItem) return;
+
+    try{
+      const cloudValue =
+        normalizeEmail(await tg.CloudStorage.getItem(EMAIL_KEY)) ||
+        normalizeEmail(await tg.CloudStorage.getItem('email'));
+      if (cloudValue) {
+        state.email = cloudValue;
+        updateEmailView(cloudValue);
+        localStorage.setItem(EMAIL_KEY, cloudValue);
+        localStorage.setItem('email', cloudValue);
+      }
+    }catch(e){
+      console.warn('CloudStorage load failed', e);
+    }
   }
 
   function render(){
@@ -276,16 +476,16 @@
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${s.title}</td>
-        <td><b>${money(price, state.currency)}</b></td>
-        <td>
+        <td data-label="Стоимость"><b>${money(price, state.currency)}</b></td>
+        <td data-label="Количество">
           <div class="qty">
             <input class="input" type="number" min="0" step="1" value="${qty}">
           </div>
         </td>
-        <td class="tag">${s.unit}</td>
-        <td><b>${money(sum, state.currency)}</b></td>
-        <td>${money(vat, state.currency)}</td>
-        <td><b>${money(itogo, state.currency)}</b></td>
+        <td class="tag" data-label="Ед.">${s.unit}</td>
+        <td data-label="Сумма"><b>${money(sum, state.currency)}</b></td>
+        <td data-label="Налог">${money(vat, state.currency)}</td>
+        <td data-label="Итого"><b>${money(itogo, state.currency)}</b></td>
       `;
       const input = tr.querySelector('input');
       input.addEventListener('input', ()=>{
@@ -326,41 +526,37 @@
   });
 
   // Обновление курсов (демо: просто меняем дату/индикатор)
-  document.getElementById('btnRates').addEventListener('click', async ()=>{
-    ratesState.hidden = false;
-    ratesState.textContent = '';
-    const spinner = document.createElement('span');
-    spinner.className='spin';
-    ratesState.appendChild(spinner);
-
-    try{
-      // тут бы ты подтянул реальные курсы; ниже — заглушка
-      await new Promise(res=>setTimeout(res, 700));
-      const dt = new Date();
-      ratesText.textContent =
-        `Курсы ЦБ РФ: USD ${RATES.USD} • EUR ${RATES.EUR} • CNY ${RATES.CNY} от ${dt.toLocaleDateString('ru-RU')}`;
-      ratesState.textContent = 'обновлено';
-    }catch(e){
-      ratesState.textContent = 'ошибка';
-      ratesState.style.color = 'var(--warn)';
-    }finally{
-      setTimeout(()=>{ ratesState.hidden = true; }, 1200);
-      render();
-    }
+  btnRates.addEventListener('click', async ()=>{
+    await loadRates(true);
   });
 
   // Смена e-mail
   document.getElementById('btnChangeEmail').addEventListener('click', async ()=>{
     const v = prompt('Укажите e-mail для отправки PDF (опционально):', state.email || '');
-    if(v !== null){
-      state.email = (v||'').trim();
-      emailText.textContent = state.email || '—';
-      localStorage.setItem('ctm_email', state.email);
+    if(v === null) return;
+
+    const normalized = normalizeEmail(v);
+    if (!isValidEmail(normalized)) {
+      tg?.showAlert?.('Введите корректный e-mail или оставьте поле пустым.');
+      return;
     }
+
+    await persistEmail(normalized);
   });
 
   // Отправка расчёта
-  document.getElementById('btnSend').addEventListener('click', ()=>{
+  btnSend.addEventListener('click', async ()=>{
+    const hasSelectedRows = SERVICES.some((_, i)=> +((state.qty[i] ?? 0) || 0) > 0);
+    if (!hasSelectedRows) {
+      tg?.showAlert?.('Укажите количество хотя бы для одной услуги.');
+      return;
+    }
+
+    if (!isValidEmail(state.email)) {
+      tg?.showAlert?.('Сохранён некорректный e-mail. Укажите корректный адрес или очистите поле.');
+      return;
+    }
+
     const subtotal = SERVICES.reduce((acc, s, i)=>{
       const price = priceInCurrency(s.price, state.currency);
       const qty = +((state.qty[i] ?? 0) || 0);
@@ -378,29 +574,71 @@
         title:s.title,
         price: priceInCurrency(s.price, state.currency),
         qty: +((state.qty[i] ?? 0) || 0),
-        unit: s.unit
-      })),
+        unit: s.unit,
+        sum: priceInCurrency(s.price, state.currency) * (+((state.qty[i] ?? 0) || 0))
+      })).filter((row)=>row.qty > 0),
       totals: { subtotal, vat, total },
       ts: new Date().toISOString()
     };
 
+    btnSend.disabled = true;
+    const prevLabel = btnSend.textContent;
+    btnSend.textContent = 'Отправляем...';
+
     try{
-      tg?.HapticFeedback?.notificationOccurred?.('success');
-      tg?.sendData(JSON.stringify({type:'order', payload}));
-      // чтобы Telegram Desktop/Web не "залипал" при повторном открытии
-      setTimeout(()=> tg?.close && tg.close(), 120);
+      if (tg?.sendData) {
+        tg?.HapticFeedback?.notificationOccurred?.('success');
+        tg.sendData(JSON.stringify({type:'order', payload}));
+        setTimeout(()=> tg?.close && tg.close(), 120);
+        return;
+      }
+
+      const res = await fetch(`${API_BASE}/orders`, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json; charset=utf-8' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        throw new Error(data.details || data.message || 'Не удалось сформировать расчёт');
+      }
+
+      if (data.downloadUrl) {
+        window.open(data.downloadUrl, '_blank', 'noopener');
+      }
+
+      const emailMessage = payload.email
+        ? (data.emailSent ? ' PDF также отправлен на e-mail.' : ' PDF сформирован, но e-mail не был отправлен.')
+        : '';
+      alert(`Расчёт сформирован.${emailMessage}`);
     }catch(e){
-      alert('Не удалось передать данные в бота. Откройте калькулятор из Telegram.');
+      const message = tg?.sendData
+        ? 'Не удалось передать данные в бота. Откройте калькулятор из Telegram и попробуйте снова.'
+        : `Не удалось сформировать расчёт: ${e.message}`;
+      alert(message);
       console.error(e);
+    }finally{
+      btnSend.disabled = false;
+      btnSend.textContent = prevLabel;
     }
   });
 
   // Первый прогон текста курсов
   (function initRates(){
-    const dt = new Date();
-    ratesText.textContent =
-      `Курсы ЦБ РФ: USD ${RATES.USD} • EUR ${RATES.EUR} • CNY ${RATES.CNY} от ${dt.toLocaleDateString('ru-RU')}`;
+    const cached = localStorage.getItem('ctm_rates');
+    if (cached) {
+      try{
+        const parsed = JSON.parse(cached);
+        RATES = { ...RATES, ...parsed };
+        setRatesText(parsed.date || new Date().toLocaleDateString('ru-RU'));
+        return;
+      }catch(e){}
+    }
+    setRatesText(new Date().toLocaleDateString('ru-RU'));
   })();
+
+  hydrateEmail();
+  loadRates(false);
 </script>
 </body>
 </html>

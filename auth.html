@@ -11,6 +11,11 @@
     .row{display:flex;gap:10px}
     input{flex:1;padding:12px 14px;border:1px solid #e2e8f0;border-radius:12px;font:inherit}
     .btn{background:#f97316;color:#fff;border:0;border-radius:12px;padding:12px 16px;font-weight:600;cursor:pointer}
+    @media (max-width: 640px){
+      .wrap{margin:0 auto;padding:12px 10px calc(16px + env(safe-area-inset-bottom))}
+      .row{flex-direction:column}
+      .btn{width:100%}
+    }
   </style>
 </head>
 <body>
@@ -26,23 +31,29 @@
   </div>
 
   <script>
-    const tg = window.Telegram?.WebApp; try{ tg?.ready(); tg?.expand(); }catch(e){}
+    const tg = window.Telegram?.WebApp;
+    const EMAIL_KEY = 'ctm_email';
+    try{ tg?.ready(); tg?.expand(); }catch(e){}
     (async()=>{
       try{
-        const res = await tg?.CloudStorage?.getItem('email');
+        const res = await tg?.CloudStorage?.getItem(EMAIL_KEY) || await tg?.CloudStorage?.getItem('email');
         if (res) document.getElementById('email').value = res;
       }catch(e){}
     })();
 
     document.getElementById('save').addEventListener('click', async ()=>{
-      const v = (document.getElementById('email').value||'').trim();
+      const v = (document.getElementById('email').value||'').trim().toLowerCase();
       if (!v || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) {
         return tg?.showAlert?.('Введите корректный e-mail');
       }
       try{
+        await tg?.CloudStorage?.setItem(EMAIL_KEY, v);
         await tg?.CloudStorage?.setItem('email', v);
         // также в localStorage на всякий случай
-        try { localStorage.setItem('email', v) } catch(e){}
+        try {
+          localStorage.setItem(EMAIL_KEY, v);
+          localStorage.setItem('email', v);
+        } catch(e){}
         tg?.showPopup?.({title:'Готово', message:'E-mail сохранён', buttons:[{type:'ok'}]});
         location.href = './index.html';
       }catch(e){

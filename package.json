@@ -1,0 +1,19 @@
+{
+  "name": "ct-miniapp",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "node --watch server.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "dejavu-fonts-ttf": "^2.37.3",
+    "dotenv": "^16.4.7",
+    "nodemailer": "^6.10.0",
+    "pdfkit": "^0.17.1"
+  }
+}
