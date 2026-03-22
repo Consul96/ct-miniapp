@@ -8,14 +8,10 @@
   <meta name="color-scheme" content="light dark" />
 
   <style>
-    /* ========= Brand tokens (фиксированные) ========= */
     :root{
-      --brand: #ff6a00;              /* фирменный акцент */
-      --brand-ink: #0b1220;          /* тёмный текст поверх светлых */
+      --brand: #ff6a00;
       --ok: #16a34a;
       --warn: #ef4444;
-
-      /* Light */
       --bg: #f7f8fb;
       --card: #ffffff;
       --ink: #0f172a;
@@ -36,155 +32,326 @@
       }
     }
 
-    *{ box-sizing: border-box; }
+    *{ box-sizing:border-box; }
     html,body{ height:100%; }
     body{
-      margin:0; background:var(--bg); color:var(--ink);
-      font: 15px/1.4 -apple-system,system-ui,Segoe UI,Roboto,Inter,Arial,"Noto Sans",sans-serif;
-      -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+      margin:0;
+      background:var(--bg);
+      color:var(--ink);
+      font:15px/1.4 -apple-system,system-ui,Segoe UI,Roboto,Inter,Arial,"Noto Sans",sans-serif;
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
     }
 
     .wrap{
-      max-width: 1100px; margin: 18px auto 36px; padding: 0 14px;
+      max-width:1180px;
+      margin:18px auto 36px;
+      padding:0 14px;
     }
     .card{
-      background:var(--card); border:1px solid var(--stroke); border-radius:20px;
-      box-shadow: var(--shadow); overflow: hidden;
+      background:var(--card);
+      border:1px solid var(--stroke);
+      border-radius:20px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
     }
-
     .header{
-      display:flex; align-items:flex-start; gap:12px; padding:18px 18px 6px; flex-wrap:wrap;
+      display:flex;
+      gap:18px;
+      justify-content:space-between;
+      align-items:flex-start;
+      padding:18px 18px 8px;
+      flex-wrap:wrap;
     }
     .title{
-      font-size:20px; font-weight:800; letter-spacing:.2px;
+      font-size:20px;
+      font-weight:800;
+      letter-spacing:.2px;
     }
     .sub{
-      margin-top:2px; color:var(--muted); font-size:12px;
+      margin-top:2px;
+      color:var(--muted);
+      font-size:12px;
     }
 
-    /* Controls row */
+    .header-actions{
+      display:flex;
+      align-items:flex-end;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-left:auto;
+    }
+    .field-card{
+      min-width:280px;
+      padding:10px 12px;
+      border:1px solid var(--stroke);
+      border-radius:14px;
+      background:var(--field);
+    }
+    .field-label{
+      display:block;
+      margin-bottom:6px;
+      color:var(--muted);
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:.02em;
+      text-transform:uppercase;
+    }
+    .field-note{
+      display:block;
+      min-height:16px;
+      margin-top:6px;
+      font-size:12px;
+      color:var(--muted);
+    }
+    .field-note.ok{ color:var(--ok); }
+    .field-note.error{ color:var(--warn); }
+
     .controls{
-      display:flex; gap:12px; flex-wrap:wrap; padding:12px 18px 2px;
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
       align-items:center;
+      padding:12px 18px 2px;
     }
     .chip{
-      display:inline-flex; align-items:center; gap:8px;
-      padding:8px 10px; border:1px solid var(--stroke); background:var(--field);
-      border-radius:12px; font-weight:600;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border:1px solid var(--stroke);
+      background:var(--field);
+      border-radius:12px;
+      font-weight:600;
     }
     .select, .btn, .input{
-      appearance:none; outline:none; border:1.5px solid var(--stroke);
-      background:var(--field); color:var(--ink);
-      border-radius:12px; padding:10px 12px; font-weight:700;
-      transition:.15s border-color ease, .15s transform ease;
+      appearance:none;
+      outline:none;
+      border:1.5px solid var(--stroke);
+      background:var(--field);
+      color:var(--ink);
+      border-radius:12px;
+      padding:10px 12px;
+      font:inherit;
+      font-weight:700;
       min-height:44px;
+      transition:.15s border-color ease, .15s transform ease;
     }
     .select:focus,.input:focus{ border-color:var(--brand); }
     .btn{
-      background: var(--brand);
-      color:white; border-color:transparent;
-      padding:11px 16px; font-weight:800; letter-spacing:.2px;
-      box-shadow: 0 10px 25px rgba(255,106,0,.35);
-      cursor:pointer; user-select:none;
+      background:var(--brand);
+      color:#fff;
+      border-color:transparent;
+      padding:11px 18px;
+      font-weight:800;
+      letter-spacing:.2px;
+      box-shadow:0 10px 25px rgba(255,106,0,.35);
+      cursor:pointer;
+      user-select:none;
     }
-    .btn:hover{ transform: translateY(-1px); }
-    .btn:active{ transform: translateY(0); }
+    .btn:hover{ transform:translateY(-1px); }
+    .btn:active{ transform:translateY(0); }
+    .btn:disabled{
+      opacity:.7;
+      cursor:progress;
+      transform:none;
+    }
 
     .rates{
-      display:flex; align-items:center; gap:8px;
-      padding:8px 12px; border:1px dashed var(--stroke);
-      background:var(--field); border-radius:12px;
-      color:var(--muted); font-weight:700;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border:1px dashed var(--stroke);
+      background:var(--field);
+      border-radius:12px;
+      color:var(--muted);
+      font-weight:700;
     }
-    .link{ color:var(--muted); text-decoration:underline; cursor:pointer; }
+    .ok{ color:var(--ok); font-weight:800; }
+    .spin{
+      width:14px;
+      height:14px;
+      border-radius:50%;
+      border:2px solid var(--stroke);
+      border-top-color:var(--brand);
+      animation:r .8s linear infinite;
+    }
+    @keyframes r{ to{ transform:rotate(360deg); } }
 
-    /* Table */
+    .section{
+      padding:16px 18px 2px;
+    }
+    .section-head{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:flex-end;
+      margin-bottom:12px;
+      flex-wrap:wrap;
+    }
+    .section-title{
+      font-size:16px;
+      font-weight:800;
+    }
+    .section-sub{
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    .questionnaire-grid{
+      display:grid;
+      grid-template-columns:repeat(4, minmax(0, 1fr));
+      gap:12px;
+    }
+    .question{
+      padding:12px;
+      border:1px solid var(--stroke);
+      border-radius:16px;
+      background:rgba(148,163,184,.05);
+    }
+    .question.compact{
+      padding-bottom:10px;
+    }
+    .question .input,
+    .question .select{
+      width:100%;
+    }
+    .question-meta{
+      margin-top:8px;
+      color:var(--muted);
+      font-size:12px;
+    }
+    .question.full{
+      grid-column:span 2;
+    }
+
     .table-wrap{
       overflow-x:auto;
       -webkit-overflow-scrolling:touch;
+      padding:10px 0 0;
     }
-    table{ width:100%; border-collapse: collapse; }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      min-width:980px;
+    }
     thead th{
-      text-align:left; font-size:12px; color:var(--muted);
-      padding:12px 16px; background:rgba(148,163,184,.08);
+      text-align:left;
+      font-size:12px;
+      color:var(--muted);
+      padding:12px 16px;
+      background:rgba(148,163,184,.08);
       border-bottom:1px solid var(--stroke);
     }
     tbody td{
-      padding:14px 16px; border-bottom:1px solid var(--stroke);
-      vertical-align: middle;
+      padding:14px 16px;
+      border-bottom:1px solid var(--stroke);
+      vertical-align:middle;
+    }
+    .rate-input{
+      width:120px;
+      text-align:right;
+      font-variant-numeric:tabular-nums;
+    }
+    .qty-badge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:82px;
+      padding:10px 12px;
+      border:1px solid var(--stroke);
+      border-radius:12px;
+      background:var(--field);
+      font-weight:800;
+      font-variant-numeric:tabular-nums;
+    }
+    .tag{
+      color:var(--muted);
+      font-weight:700;
+    }
+    .service-help{
+      display:block;
+      margin-top:4px;
+      color:var(--muted);
+      font-size:12px;
     }
 
-    .qty{
-      width:110px;
-      display:inline-flex; align-items:center; gap:8px;
-    }
-    .qty .input{ width:100%; text-align:center; font-variant-numeric: tabular-nums; }
-
-    .tag{ color:var(--muted); font-weight:700; }
-
-    /* Totals pane */
     .totals{
-      display:flex; justify-content:flex-end; padding:14px 18px 22px;
+      display:flex;
+      justify-content:flex-end;
+      padding:14px 18px 22px;
     }
     .totals .box{
-      width:360px; background:var(--card); border:1px solid var(--stroke);
-      border-radius:16px; overflow:hidden; box-shadow: var(--shadow);
+      width:360px;
+      background:var(--card);
+      border:1px solid var(--stroke);
+      border-radius:16px;
+      overflow:hidden;
+      box-shadow:var(--shadow);
     }
     .row{
-      display:flex; justify-content:space-between; padding:12px 14px;
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      padding:12px 14px;
       font-weight:800;
     }
     .row.dim{ color:var(--muted); background:rgba(148,163,184,.08); }
     .row.total{
-      background: var(--brand); color:white; letter-spacing:.3px;
-      box-shadow: inset 0 -1px rgba(255,255,255,.15);
+      background:var(--brand);
+      color:#fff;
+      letter-spacing:.3px;
+      box-shadow:inset 0 -1px rgba(255,255,255,.15);
     }
-
     .hint{
-      margin:8px 18px 18px; color:var(--muted); font-size:12px;
+      margin:8px 18px 18px;
+      color:var(--muted);
+      font-size:12px;
     }
-    .ok{ color: var(--ok); font-weight:800; }
-    .spin{
-      width:14px; height:14px; border-radius:50%;
-      border:2px solid var(--stroke); border-top-color: var(--brand);
-      animation: r .8s linear infinite;
-    }
-    @keyframes r{ to{ transform: rotate(360deg); } }
 
-    .right{ margin-left:auto; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    @media (max-width: 980px){
+      .questionnaire-grid{
+        grid-template-columns:repeat(2, minmax(0, 1fr));
+      }
+      .question.full{
+        grid-column:span 2;
+      }
+    }
 
     @media (max-width: 860px){
       body{ font-size:14px; }
       .wrap{
-        margin: 0 auto 24px;
-        padding: 12px 10px calc(16px + env(safe-area-inset-bottom));
+        margin:0 auto 24px;
+        padding:12px 10px calc(16px + env(safe-area-inset-bottom));
       }
       .card{ border-radius:18px; }
       .header,
       .controls,
+      .section,
       .totals{
         padding-left:14px;
         padding-right:14px;
       }
-      .right{
-        margin-left:0;
+      .header-actions{
         width:100%;
-        justify-content:flex-start;
       }
-      .right > *{
-        flex:1 1 180px;
-      }
+      .field-card,
+      .header-actions .btn,
       .chip,
       .rates{
         width:100%;
       }
-      .chip{
-        justify-content:space-between;
-      }
-      .btn,
-      .select{
+      .controls .chip,
+      .controls .select,
+      .controls .btn{
         width:100%;
-        white-space:normal;
+      }
+      .questionnaire-grid{
+        grid-template-columns:1fr;
+      }
+      .question.full{
+        grid-column:span 1;
       }
       .table-wrap{
         overflow:visible;
@@ -192,12 +359,13 @@
       table,
       tbody{
         display:block;
+        min-width:0;
       }
       thead{
         display:none;
       }
       tbody{
-        padding: 0 12px 12px;
+        padding:0 12px 12px;
       }
       tbody tr{
         display:grid;
@@ -207,15 +375,15 @@
         border:1px solid var(--stroke);
         border-radius:16px;
         background:var(--card);
-        box-shadow: var(--shadow);
+        box-shadow:var(--shadow);
       }
       tbody td{
         padding:0;
         border:none;
         display:flex;
         justify-content:space-between;
-        align-items:flex-start;
         gap:12px;
+        align-items:flex-start;
       }
       tbody td::before{
         content:attr(data-label);
@@ -224,7 +392,7 @@
         font-weight:800;
         letter-spacing:.02em;
         text-transform:uppercase;
-        flex:0 0 96px;
+        flex:0 0 112px;
       }
       tbody td:first-child{
         display:block;
@@ -234,9 +402,8 @@
       tbody td:first-child::before{
         content:none;
       }
-      .qty{
-        width:min(140px, 100%);
-        margin-left:auto;
+      .rate-input{
+        width:132px;
       }
       .totals{
         justify-content:stretch;
@@ -257,24 +424,35 @@
     <div class="header">
       <div>
         <div class="title">Калькулятор услуг по маркировке</div>
-        <div class="sub">Отображение сумм в выбранной валюте (по умолчанию RUB)</div>
+        <div class="sub">Заполните анкету по партии, а калькулятор сам посчитает нужные операции по маркировке. Ставки можно скорректировать вручную в RUB.</div>
       </div>
-      <div class="right">
-        <div id="emailView" class="chip">e-mail: <span id="emailText">—</span></div>
-        <button id="btnChangeEmail" class="select">сменить e-mail</button>
+
+      <div class="header-actions">
+        <div class="field-card">
+          <label class="field-label" for="emailInput">e-mail для PDF</label>
+          <input id="emailInput" class="input" type="email" inputmode="email" placeholder="name@example.com" autocomplete="email" />
+          <span id="emailStatus" class="field-note">Можно оставить пустым, тогда PDF уйдёт только в чат.</span>
+        </div>
         <button id="btnSend" class="btn">Получить расчёт</button>
       </div>
     </div>
 
     <div class="controls">
-      <div class="chip">Ставка НДС: <select id="vat" class="select">
-        <option value="20%">20%</option><option value="0%">0%</option>
-      </select></div>
+      <div class="chip">Ставка НДС:
+        <select id="vat" class="select">
+          <option value="20%">20%</option>
+          <option value="0%">0%</option>
+        </select>
+      </div>
 
-      <div class="chip">Валюта: <select id="currency" class="select">
-        <option value="RUB">RUB</option><option value="USD">USD</option>
-        <option value="EUR">EUR</option><option value="CNY">CNY</option>
-      </select></div>
+      <div class="chip">Валюта:
+        <select id="currency" class="select">
+          <option value="RUB">RUB</option>
+          <option value="USD">USD</option>
+          <option value="EUR">EUR</option>
+          <option value="CNY">CNY</option>
+        </select>
+      </div>
 
       <div class="rates">
         <span id="ratesText">Курсы ЦБ РФ: —</span>
@@ -283,13 +461,200 @@
       </div>
     </div>
 
-    <div class="table-wrap" style="padding: 10px 0 0;">
+    <div class="section">
+      <div class="section-head">
+        <div>
+          <div class="section-title">Анкета по партии</div>
+          <div class="section-sub">Поля повторяют логику анкеты маркировки: состав партии, сценарий нанесения, документы и сопровождение.</div>
+        </div>
+      </div>
+
+      <div class="questionnaire-grid">
+        <div class="question">
+          <label class="field-label" for="skuCount">Сколько SKU / артикулов в партии?</label>
+          <input id="skuCount" class="input q-input" type="number" min="0" step="1" />
+        </div>
+
+        <div class="question">
+          <label class="field-label" for="unitsCount">Сколько всего единиц товара?</label>
+          <input id="unitsCount" class="input q-input" type="number" min="0" step="1" />
+        </div>
+
+        <div class="question">
+          <label class="field-label" for="unitsPerBox">Сколько единиц в среднем в одном коробе?</label>
+          <input id="unitsPerBox" class="input q-input" type="number" min="0" step="1" />
+        </div>
+
+        <div class="question compact">
+          <label class="field-label" for="boxCount">Итоговое количество коробов</label>
+          <input id="boxCount" class="input" type="number" readonly />
+          <div class="question-meta">Считается автоматически: общее количество / единиц в коробе.</div>
+        </div>
+
+        <div class="question">
+          <label class="field-label" for="rdCount">Сколько разрешительных документов нужно учесть?</label>
+          <input id="rdCount" class="input q-input" type="number" min="0" step="1" />
+        </div>
+
+        <div class="question">
+          <label class="field-label" for="needGtin">GTIN получаем через CT Mentor?</label>
+          <select id="needGtin" class="select q-input">
+            <option value="no">нет</option>
+            <option value="yes">да</option>
+          </select>
+        </div>
+
+        <div class="question">
+          <label class="field-label" for="needKm">Коды маркировки заказываем через CT Mentor?</label>
+          <select id="needKm" class="select q-input">
+            <option value="no">нет</option>
+            <option value="yes">да</option>
+          </select>
+        </div>
+
+        <div class="question">
+          <label class="field-label" for="printBy">Кто печатает этикетки для партии?</label>
+          <select id="printBy" class="select q-input">
+            <option value="im">ИМ</option>
+            <option value="client">клиент</option>
+            <option value="factory">фабрика</option>
+          </select>
+        </div>
+
+        <div class="question full">
+          <label class="field-label" for="format">Какой сценарий маркировки нужен?</label>
+          <select id="format" class="select q-input">
+            <option value="apply_verify">Нанести + верифицировать</option>
+            <option value="apply_camera">Нанести + верифицировать под камерой</option>
+            <option value="insert_box">КМ вложить в короб</option>
+            <option value="box_no_open">КМ на короб, без вскрытия</option>
+            <option value="send_mail">Передавать КМ по почте</option>
+            <option value="recount_insert">Пересчитать количество, вложить КМ</option>
+            <option value="recount_shoes_insert">Пересчитать обувь, вложить КМ</option>
+          </select>
+        </div>
+
+        <div class="question">
+          <label class="field-label" for="needVerification">Нужна 100% верификация после нанесения?</label>
+          <select id="needVerification" class="select q-input">
+            <option value="yes">да</option>
+            <option value="no">нет</option>
+          </select>
+        </div>
+
+        <div class="question">
+          <label class="field-label" for="needCamera">Нужна верификация под камерой?</label>
+          <select id="needCamera" class="select q-input">
+            <option value="no">нет</option>
+            <option value="yes">да</option>
+          </select>
+        </div>
+
+        <div class="question">
+          <label class="field-label" for="putInBox">Нужно вложить КМ в короб?</label>
+          <select id="putInBox" class="select q-input">
+            <option value="no">нет</option>
+            <option value="yes">да</option>
+          </select>
+        </div>
+
+        <div class="question">
+          <label class="field-label" for="putOnBox">Нужно клеить КМ на короб?</label>
+          <select id="putOnBox" class="select q-input">
+            <option value="no">нет</option>
+            <option value="yes">да</option>
+          </select>
+        </div>
+
+        <div class="question">
+          <label class="field-label" for="mailDelivery">Нужно отправлять КМ по почте или курьером?</label>
+          <select id="mailDelivery" class="select q-input">
+            <option value="no">нет</option>
+            <option value="yes">да</option>
+          </select>
+        </div>
+
+        <div class="question">
+          <label class="field-label" for="recount">Нужен пересчёт количества товара?</label>
+          <select id="recount" class="select q-input">
+            <option value="no">нет</option>
+            <option value="yes">да</option>
+          </select>
+        </div>
+
+        <div class="question">
+          <label class="field-label" for="aggregation">Нужна агрегация коробов?</label>
+          <select id="aggregation" class="select q-input">
+            <option value="no">нет</option>
+            <option value="yes">да</option>
+          </select>
+        </div>
+
+        <div class="question">
+          <label class="field-label" for="photoReport">Нужен фото- или видеоотчёт по партии?</label>
+          <select id="photoReport" class="select q-input">
+            <option value="no">нет</option>
+            <option value="yes">да</option>
+          </select>
+        </div>
+
+        <div class="question">
+          <label class="field-label" for="verificationFile">Нужен файл верификации?</label>
+          <select id="verificationFile" class="select q-input">
+            <option value="no">нет</option>
+            <option value="yes">да</option>
+          </select>
+        </div>
+
+        <div class="question">
+          <label class="field-label" for="rdCheck">Нужно проверить РД и привязать их к карточке?</label>
+          <select id="rdCheck" class="select q-input">
+            <option value="no">нет</option>
+            <option value="yes">да</option>
+          </select>
+        </div>
+
+        <div class="question">
+          <label class="field-label" for="providerSetup">Нужна настройка сервис-провайдера / МЧД?</label>
+          <select id="providerSetup" class="select q-input">
+            <option value="no">нет</option>
+            <option value="yes">да</option>
+          </select>
+        </div>
+
+        <div class="question">
+          <label class="field-label" for="circulation">Нужен ввод в оборот после нанесения?</label>
+          <select id="circulation" class="select q-input">
+            <option value="no">нет</option>
+            <option value="yes">да</option>
+          </select>
+        </div>
+
+        <div class="question">
+          <label class="field-label" for="updEdo">Нужно сопровождение УПД / ЭДО?</label>
+          <select id="updEdo" class="select q-input">
+            <option value="no">нет</option>
+            <option value="yes">да</option>
+          </select>
+        </div>
+
+        <div class="question">
+          <label class="field-label" for="fixes">Нужны дополнительные проверки или исправление ошибок?</label>
+          <select id="fixes" class="select q-input">
+            <option value="no">нет</option>
+            <option value="yes">да</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
       <table>
         <thead>
         <tr>
-          <th>НАИМЕНОВАНИЕ</th>
-          <th>СТОИМОСТЬ</th>
-          <th>КОЛИЧЕСТВО</th>
+          <th>СТАТЬЯ</th>
+          <th>СТАВКА (RUB)</th>
+          <th>КОЛ-ВО</th>
           <th>ЕД.</th>
           <th>СУММА</th>
           <th>НАЛОГ</th>
@@ -308,67 +673,148 @@
       </div>
     </div>
 
-    <div class="hint">PDF придёт в этот чат, а при указанном e-mail — ещё и на почту.</div>
+    <div class="hint">PDF придёт в этот чат, а при указанном e-mail ещё и на почту. Объём услуг теперь считается по анкете партии, а не вводится вручную по каждой строке.</div>
   </div>
 </div>
 
 <script>
-  // ---------------- Data ----------------
   const tg = window.Telegram?.WebApp;
   const API_BASE = '/api';
   const EMAIL_KEY = 'ctm_email';
+  const QUESTIONNAIRE_KEY = 'ctm_questionnaire_v2';
+  const SERVICE_RATES_KEY = 'ctm_service_rates_v2';
+
   tg?.ready?.();
   tg?.expand?.();
 
-  const money = (n, cur) => (new Intl.NumberFormat('ru-RU', {
-    minimumFractionDigits:2, maximumFractionDigits:2
-  }).format(+n)) + ' ' + (cur==='RUB'?'₽':cur);
-
-  const SERVICES = [
-    {title:'Получение GTIN и КМ (контракт агента)',              price:0.60, unit:'шт'},
-    {title:'Формирование PDF с КМ (если контракт агента — бесплатно)', price:3.00, unit:'шт'},
-    {title:'Подключение МЧД, получение GTIN и КМ в ЛК клиента',  price:15000, unit:'фикс'},
-    {title:'Консультация по вопросам маркировки, УПД',           price:2500, unit:'ч'},
-    {title:'Пакетирование',                                      price:1.50, unit:'шт'},
-    {title:'Создание шаблона этикеток',                           price:2000, unit:'фикс'},
-    {title:'Оформление карточек в НКТ',                           price:2.00, unit:'шт'},
-    {title:'Регистрация в ЧЗ/GS1 РУС',                            price:15000, unit:'фикс'}
+  const SERVICE_DEFS = [
+    { id:'baseProject', title:'Базовая ставка проекта / партии', unit:'партия', defaultRate:2500, note:'Минимальный административный запуск проекта.', getQty:() => 1 },
+    { id:'getGtin', title:'Получение GTIN', unit:'SKU', defaultRate:0.6, note:'Считается по количеству SKU, если GTIN получаем через нас.', getQty:(q) => q.needGtin === 'yes' ? q.skuCount : 0 },
+    { id:'processKm', title:'Заказ / обработка КМ', unit:'ед.', defaultRate:0.6, note:'Считается по количеству единиц.', getQty:(q) => q.needKm === 'yes' ? q.unitsCount : 0 },
+    { id:'printLabels', title:'Печать этикеток', unit:'ед.', defaultRate:3, note:'Только если печать на стороне ИМ.', getQty:(q) => q.printBy === 'im' ? q.unitsCount : 0 },
+    { id:'applyKm', title:'Нанесение КМ', unit:'ед.', defaultRate:1.5, note:'Для сценариев с нанесением на единицу товара.', getQty:(q) => ['apply_verify', 'apply_camera'].includes(q.format) ? q.unitsCount : 0 },
+    { id:'verifyKm', title:'Верификация КМ', unit:'ед.', defaultRate:0, note:'100% верификация после нанесения.', getQty:(q) => (q.needVerification === 'yes' || ['apply_verify', 'apply_camera'].includes(q.format)) ? q.unitsCount : 0 },
+    { id:'camera', title:'Верификация под камерой', unit:'ед.', defaultRate:0, note:'Доплата за работу под камерой.', getQty:(q) => (q.needCamera === 'yes' || q.format === 'apply_camera') ? q.unitsCount : 0 },
+    { id:'insertBox', title:'Вложение КМ в короб', unit:'короб', defaultRate:0, note:'Когда КМ нужно вложить в короб.', getQty:(q) => (q.putInBox === 'yes' || ['insert_box', 'recount_insert', 'recount_shoes_insert'].includes(q.format)) ? q.boxCount : 0 },
+    { id:'boxNoOpen', title:'КМ на короб, без вскрытия', unit:'короб', defaultRate:0, note:'Сценарий маркировки коробов.', getQty:(q) => (q.putOnBox === 'yes' || q.format === 'box_no_open') ? q.boxCount : 0 },
+    { id:'courier', title:'Отправка КМ по почте / курьером', unit:'кейс', defaultRate:1500, note:'Фиксированная логистическая статья.', getQty:(q) => (q.mailDelivery === 'yes' || q.format === 'send_mail') ? 1 : 0 },
+    { id:'recount', title:'Пересчёт количества', unit:'ед.', defaultRate:0, note:'Дополнительная ручная операция.', getQty:(q) => (q.recount === 'yes' || ['recount_insert', 'recount_shoes_insert'].includes(q.format)) ? q.unitsCount : 0 },
+    { id:'aggregate', title:'Агрегация коробов', unit:'короб', defaultRate:1.5, note:'Считается по количеству коробов.', getQty:(q) => q.aggregation === 'yes' ? q.boxCount : 0 },
+    { id:'photo', title:'Фото / видео отчёт', unit:'партия', defaultRate:2000, note:'Фиксированный сервис по партии.', getQty:(q) => q.photoReport === 'yes' ? 1 : 0 },
+    { id:'verificationFile', title:'Файл верификации', unit:'партия', defaultRate:2000, note:'Фиксированный сервис по партии.', getQty:(q) => q.verificationFile === 'yes' ? 1 : 0 },
+    { id:'rdCheck', title:'Проверка / привязка РД', unit:'РД', defaultRate:2, note:'Считается по количеству РД.', getQty:(q) => q.rdCheck === 'yes' ? q.rdCount : 0 },
+    { id:'providerSetup', title:'Настройка сервис-провайдера / МЧД', unit:'кейс', defaultRate:15000, note:'Разовая настройка доступа в ЧЗ.', getQty:(q) => q.providerSetup === 'yes' ? 1 : 0 },
+    { id:'circulation', title:'Ввод в оборот', unit:'ед.', defaultRate:0.6, note:'Считается по количеству единиц.', getQty:(q) => q.circulation === 'yes' ? q.unitsCount : 0 },
+    { id:'updEdo', title:'Сопровождение УПД / ЭДО', unit:'партия', defaultRate:2500, note:'Фиксированное сопровождение партии.', getQty:(q) => q.updEdo === 'yes' ? 1 : 0 },
+    { id:'fixes', title:'Исправление ошибок / ручные доработки', unit:'кейс', defaultRate:2500, note:'Резерв на проблемные кейсы.', getQty:(q) => q.fixes === 'yes' ? 1 : 0 }
   ];
 
-  // Курсы (для примера просто храню коэффициенты относительно RUB)
+  const QUESTIONNAIRE_DEFAULTS = {
+    skuCount: 0,
+    unitsCount: 0,
+    unitsPerBox: 0,
+    rdCount: 0,
+    needGtin: 'no',
+    needKm: 'no',
+    printBy: 'im',
+    format: 'apply_verify',
+    needVerification: 'yes',
+    needCamera: 'no',
+    putInBox: 'no',
+    putOnBox: 'no',
+    mailDelivery: 'no',
+    recount: 'no',
+    aggregation: 'no',
+    photoReport: 'no',
+    verificationFile: 'no',
+    rdCheck: 'no',
+    providerSetup: 'no',
+    circulation: 'no',
+    updEdo: 'no',
+    fixes: 'no'
+  };
+
+  const QUESTIONNAIRE_SUMMARY_LABELS = {
+    skuCount:'Количество SKU',
+    unitsCount:'Количество единиц',
+    unitsPerBox:'Единиц в коробе',
+    boxCount:'Количество коробов',
+    rdCount:'Количество РД',
+    needGtin:'Получение GTIN',
+    needKm:'Заказ КМ',
+    printBy:'Кто печатает этикетки',
+    format:'Формат нанесения',
+    needVerification:'100% верификация',
+    needCamera:'Камера',
+    putInBox:'Вложение в короб',
+    putOnBox:'КМ на короб',
+    mailDelivery:'Почта / курьер',
+    recount:'Пересчёт',
+    aggregation:'Агрегация',
+    photoReport:'Фото / видео отчёт',
+    verificationFile:'Файл верификации',
+    rdCheck:'Проверка / привязка РД',
+    providerSetup:'Настройка сервис-провайдера / МЧД',
+    circulation:'Ввод в оборот',
+    updEdo:'УПД / ЭДО',
+    fixes:'Ручные доработки'
+  };
+
+  const FORMAT_LABELS = {
+    apply_verify:'Нанести + верифицировать',
+    apply_camera:'Нанести + верифицировать под камерой',
+    insert_box:'КМ вложить в короб',
+    box_no_open:'КМ на короб, без вскрытия',
+    send_mail:'Передавать КМ по почте',
+    recount_insert:'Пересчитать количество, вложить КМ',
+    recount_shoes_insert:'Пересчитать обувь, вложить КМ'
+  };
+
+  const SELECT_LABELS = {
+    yes:'да',
+    no:'нет',
+    im:'ИМ',
+    client:'клиент',
+    factory:'фабрика'
+  };
+
+  const money = (n, cur) => (new Intl.NumberFormat('ru-RU', {
+    minimumFractionDigits:2, maximumFractionDigits:2
+  }).format(+n)) + ' ' + (cur === 'RUB' ? '₽' : cur);
+
   let RATES = { USD: 83.61, EUR: 97.68, CNY: 11.68, RUB: 1 };
 
-  // state
+  const savedQuestionnaire = JSON.parse(localStorage.getItem(QUESTIONNAIRE_KEY) || '{}');
+  const savedServiceRates = JSON.parse(localStorage.getItem(SERVICE_RATES_KEY) || '{}');
+
   const state = {
     email: localStorage.getItem(EMAIL_KEY) || localStorage.getItem('email') || '',
     vat: localStorage.getItem('ctm_vat') || '20%',
     currency: localStorage.getItem('ctm_cur') || 'RUB',
-    qty: JSON.parse(localStorage.getItem('ctm_qty') || '[]') || []
+    questionnaire: { ...QUESTIONNAIRE_DEFAULTS, ...savedQuestionnaire },
+    ratesRub: SERVICE_DEFS.reduce((acc, service) => {
+      acc[service.id] = Number(savedServiceRates[service.id] ?? service.defaultRate) || 0;
+      return acc;
+    }, {})
   };
 
-  // ---------------- UI binding ----------------
   const rowsEl = document.getElementById('rows');
   const sumNoVat = document.getElementById('sumNoVat');
-  const sumVat   = document.getElementById('sumVat');
+  const sumVat = document.getElementById('sumVat');
   const sumTotal = document.getElementById('sumTotal');
-  const emailText= document.getElementById('emailText');
-  const ratesText= document.getElementById('ratesText');
-  const ratesState= document.getElementById('ratesState');
+  const ratesText = document.getElementById('ratesText');
+  const ratesState = document.getElementById('ratesState');
   const btnRates = document.getElementById('btnRates');
   const btnSend = document.getElementById('btnSend');
-
   const vatSel = document.getElementById('vat');
   const curSel = document.getElementById('currency');
+  const emailInput = document.getElementById('emailInput');
+  const emailStatus = document.getElementById('emailStatus');
+  const boxCountInput = document.getElementById('boxCount');
 
   vatSel.value = state.vat;
   curSel.value = state.currency;
-  emailText.textContent = state.email || '—';
-
-  function priceInCurrency(priceRub, cur){
-    if(cur==='RUB') return priceRub;
-    const rate = RATES[cur] || 1;
-    return priceRub / rate;
-  }
+  emailInput.value = state.email;
 
   function normalizeEmail(value){
     return (value || '').trim().toLowerCase();
@@ -378,61 +824,36 @@
     return !value || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   }
 
-  function updateEmailView(value){
-    emailText.textContent = value || '—';
+  function parseIntSafe(value){
+    const num = Math.floor(Number(value || 0));
+    return Number.isFinite(num) && num > 0 ? num : 0;
+  }
+
+  function priceInCurrency(priceRub, cur){
+    if (cur === 'RUB') return priceRub;
+    const rate = RATES[cur] || 1;
+    return priceRub / rate;
   }
 
   function setRatesText(dateText){
-    ratesText.textContent =
-      `Курсы ЦБ РФ: USD ${RATES.USD} • EUR ${RATES.EUR} • CNY ${RATES.CNY} от ${dateText}`;
+    ratesText.textContent = `Курсы ЦБ РФ: USD ${RATES.USD} • EUR ${RATES.EUR} • CNY ${RATES.CNY} от ${dateText}`;
   }
 
   function showRatesState(message, isError = false){
     ratesState.hidden = false;
     ratesState.textContent = message;
     ratesState.style.color = isError ? 'var(--warn)' : '';
-    setTimeout(()=>{ ratesState.hidden = true; }, 1500);
+    setTimeout(() => { ratesState.hidden = true; }, 1500);
   }
 
-  async function loadRates(force = false){
-    ratesState.hidden = false;
-    ratesState.textContent = '';
-    ratesState.style.color = '';
-    const spinner = document.createElement('span');
-    spinner.className='spin';
-    ratesState.appendChild(spinner);
-
-    try{
-      const res = await fetch(`${API_BASE}/rates${force ? '?force=1' : ''}`, { cache: 'no-store' });
-      const data = await res.json();
-      if (!res.ok || !data.ok) {
-        throw new Error(data.details || data.message || 'Неизвестная ошибка');
-      }
-
-      RATES = { ...RATES, ...data.rates };
-      localStorage.setItem('ctm_rates', JSON.stringify(data.rates));
-      setRatesText(data.rates.date);
-      showRatesState('обновлено');
-      render();
-    }catch(e){
-      const cached = localStorage.getItem('ctm_rates');
-      if (cached) {
-        try{
-          const parsed = JSON.parse(cached);
-          RATES = { ...RATES, ...parsed };
-          setRatesText(parsed.date || new Date().toLocaleDateString('ru-RU'));
-          render();
-        }catch(err){}
-      }
-      showRatesState('ошибка', true);
-      console.error(e);
-    }
+  function setEmailStatus(message, mode = ''){
+    emailStatus.textContent = message;
+    emailStatus.className = `field-note${mode ? ` ${mode}` : ''}`;
   }
 
   async function persistEmail(value){
     const normalized = normalizeEmail(value);
     state.email = normalized;
-    updateEmailView(normalized);
     localStorage.setItem(EMAIL_KEY, normalized);
     localStorage.setItem('email', normalized);
 
@@ -455,7 +876,7 @@
         normalizeEmail(await tg.CloudStorage.getItem('email'));
       if (cloudValue) {
         state.email = cloudValue;
-        updateEmailView(cloudValue);
+        emailInput.value = cloudValue;
         localStorage.setItem(EMAIL_KEY, cloudValue);
         localStorage.setItem('email', cloudValue);
       }
@@ -464,105 +885,289 @@
     }
   }
 
-  function render(){
-    rowsEl.innerHTML = '';
-    SERVICES.forEach((s, i)=>{
-      const qty = +((state.qty[i] ?? 0) || 0);
-      const price = priceInCurrency(s.price, state.currency);
-      const sum   = price * qty;
-      const vat   = (state.vat.startsWith('20') ? sum*0.2 : 0);
-      const itogo = sum + vat;
+  async function loadRates(force = false){
+    ratesState.hidden = false;
+    ratesState.textContent = '';
+    ratesState.style.color = '';
+    const spinner = document.createElement('span');
+    spinner.className = 'spin';
+    ratesState.replaceChildren(spinner);
 
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${s.title}</td>
-        <td data-label="Стоимость"><b>${money(price, state.currency)}</b></td>
-        <td data-label="Количество">
-          <div class="qty">
-            <input class="input" type="number" min="0" step="1" value="${qty}">
-          </div>
-        </td>
-        <td class="tag" data-label="Ед.">${s.unit}</td>
-        <td data-label="Сумма"><b>${money(sum, state.currency)}</b></td>
-        <td data-label="Налог">${money(vat, state.currency)}</td>
-        <td data-label="Итого"><b>${money(itogo, state.currency)}</b></td>
-      `;
-      const input = tr.querySelector('input');
-      input.addEventListener('input', ()=>{
-        const v = Math.max(0, Math.floor(+input.value || 0));
-        state.qty[i] = v;
-        localStorage.setItem('ctm_qty', JSON.stringify(state.qty));
-        render();
-      });
-      rowsEl.appendChild(tr);
-    });
+    try{
+      const res = await fetch(`${API_BASE}/rates${force ? '?force=1' : ''}`, { cache:'no-store' });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        throw new Error(data.details || data.message || 'Неизвестная ошибка');
+      }
 
-    // totals
-    let subtotal = 0;
-    SERVICES.forEach((s, i)=>{
-      const qty = +((state.qty[i] ?? 0) || 0);
-      const price = priceInCurrency(s.price, state.currency);
-      subtotal += price * qty;
-    });
-    const vat = state.vat.startsWith('20') ? subtotal * 0.2 : 0;
-    const total = subtotal + vat;
-
-    sumNoVat.textContent = money(subtotal, state.currency);
-    sumVat.textContent   = money(vat, state.currency);
-    sumTotal.textContent = money(total, state.currency);
+      RATES = { ...RATES, ...data.rates };
+      localStorage.setItem('ctm_rates', JSON.stringify(data.rates));
+      setRatesText(data.rates.date);
+      showRatesState('обновлено');
+      updateServiceRows();
+    }catch(e){
+      const cached = localStorage.getItem('ctm_rates');
+      if (cached) {
+        try{
+          const parsed = JSON.parse(cached);
+          RATES = { ...RATES, ...parsed };
+          setRatesText(parsed.date || new Date().toLocaleDateString('ru-RU'));
+          updateServiceRows();
+        }catch(err){}
+      }
+      showRatesState('ошибка', true);
+      console.error(e);
+    }
   }
 
-  render();
+  function persistQuestionnaire(){
+    localStorage.setItem(QUESTIONNAIRE_KEY, JSON.stringify(state.questionnaire));
+  }
 
-  vatSel.addEventListener('change', ()=>{
-    state.vat = vatSel.value;
-    localStorage.setItem('ctm_vat', state.vat);
-    render();
+  function persistRates(){
+    localStorage.setItem(SERVICE_RATES_KEY, JSON.stringify(state.ratesRub));
+  }
+
+  function syncQuestionnaireUI(){
+    Object.entries(QUESTIONNAIRE_DEFAULTS).forEach(([key]) => {
+      const element = document.getElementById(key);
+      if (!element) return;
+      element.value = state.questionnaire[key];
+    });
+    updateDerivedFields();
+  }
+
+  function updateDerivedFields(){
+    const boxCount = state.questionnaire.boxCount;
+    boxCountInput.value = String(boxCount);
+  }
+
+  function computeQuestionnaire(){
+    const q = {
+      ...state.questionnaire,
+      skuCount: parseIntSafe(state.questionnaire.skuCount),
+      unitsCount: parseIntSafe(state.questionnaire.unitsCount),
+      unitsPerBox: parseIntSafe(state.questionnaire.unitsPerBox),
+      rdCount: parseIntSafe(state.questionnaire.rdCount)
+    };
+
+    q.boxCount = q.unitsPerBox > 0 ? Math.ceil(q.unitsCount / q.unitsPerBox) : 0;
+    state.questionnaire = q;
+    updateDerivedFields();
+    persistQuestionnaire();
+    return q;
+  }
+
+  function getQuestionnaireSummary(q){
+    const rawEntries = [
+      ['skuCount', q.skuCount],
+      ['unitsCount', q.unitsCount],
+      ['unitsPerBox', q.unitsPerBox],
+      ['boxCount', q.boxCount],
+      ['rdCount', q.rdCount],
+      ['needGtin', SELECT_LABELS[q.needGtin]],
+      ['needKm', SELECT_LABELS[q.needKm]],
+      ['printBy', SELECT_LABELS[q.printBy]],
+      ['format', FORMAT_LABELS[q.format]],
+      ['needVerification', SELECT_LABELS[q.needVerification]],
+      ['needCamera', SELECT_LABELS[q.needCamera]],
+      ['putInBox', SELECT_LABELS[q.putInBox]],
+      ['putOnBox', SELECT_LABELS[q.putOnBox]],
+      ['mailDelivery', SELECT_LABELS[q.mailDelivery]],
+      ['recount', SELECT_LABELS[q.recount]],
+      ['aggregation', SELECT_LABELS[q.aggregation]],
+      ['photoReport', SELECT_LABELS[q.photoReport]],
+      ['verificationFile', SELECT_LABELS[q.verificationFile]],
+      ['rdCheck', SELECT_LABELS[q.rdCheck]],
+      ['providerSetup', SELECT_LABELS[q.providerSetup]],
+      ['circulation', SELECT_LABELS[q.circulation]],
+      ['updEdo', SELECT_LABELS[q.updEdo]],
+      ['fixes', SELECT_LABELS[q.fixes]]
+    ];
+
+    return rawEntries
+      .filter(([, value]) => value !== 0 && value !== 'нет')
+      .map(([key, value]) => ({ label: QUESTIONNAIRE_SUMMARY_LABELS[key], value: String(value) }));
+  }
+
+  const rowNodes = new Map();
+
+  function buildServiceRows(){
+    rowsEl.innerHTML = '';
+
+    SERVICE_DEFS.forEach((service) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${service.title}<span class="service-help">${service.note}</span></td>
+        <td data-label="Ставка (RUB)">
+          <input class="input rate-input" type="number" min="0" step="0.01" value="${state.ratesRub[service.id]}">
+        </td>
+        <td data-label="Кол-во"><span class="qty-badge">0</span></td>
+        <td class="tag" data-label="Ед.">${service.unit}</td>
+        <td data-label="Сумма"><b>0,00 ₽</b></td>
+        <td data-label="Налог">0,00 ₽</td>
+        <td data-label="Итого"><b>0,00 ₽</b></td>
+      `;
+
+      const rateInput = tr.querySelector('.rate-input');
+      rateInput.addEventListener('input', () => {
+        const next = Math.max(0, Number(rateInput.value || 0));
+        state.ratesRub[service.id] = next;
+        persistRates();
+        updateServiceRows();
+      });
+
+      rowNodes.set(service.id, {
+        tr,
+        rateInput,
+        qtyEl: tr.children[2].querySelector('.qty-badge'),
+        sumEl: tr.children[4].querySelector('b'),
+        vatEl: tr.children[5],
+        totalEl: tr.children[6].querySelector('b')
+      });
+
+      rowsEl.appendChild(tr);
+    });
+  }
+
+  function getCalculatedRows(){
+    const questionnaire = computeQuestionnaire();
+
+    return SERVICE_DEFS.map((service) => {
+      const qty = service.getQty(questionnaire);
+      const priceRub = Math.max(0, Number(state.ratesRub[service.id] || 0));
+      const price = priceInCurrency(priceRub, state.currency);
+      const sum = price * qty;
+      const vat = state.vat === '20%' ? sum * 0.2 : 0;
+      const total = sum + vat;
+
+      return {
+        id: service.id,
+        title: service.title,
+        unit: service.unit,
+        qty,
+        price,
+        priceRub,
+        sum,
+        vat,
+        total
+      };
+    }).filter((row) => row.qty > 0);
+  }
+
+  function updateServiceRows(){
+    const calculated = getCalculatedRows();
+    const byId = new Map(calculated.map((row) => [row.id, row]));
+
+    let subtotal = 0;
+    let vat = 0;
+
+    SERVICE_DEFS.forEach((service) => {
+      const node = rowNodes.get(service.id);
+      const row = byId.get(service.id);
+      const qty = row ? row.qty : 0;
+      const sum = row ? row.sum : 0;
+      const tax = row ? row.vat : 0;
+      const total = row ? row.total : 0;
+
+      node.qtyEl.textContent = String(qty);
+      node.sumEl.textContent = money(sum, state.currency);
+      node.vatEl.textContent = money(tax, state.currency);
+      node.totalEl.textContent = money(total, state.currency);
+
+      subtotal += sum;
+      vat += tax;
+    });
+
+    sumNoVat.textContent = money(subtotal, state.currency);
+    sumVat.textContent = money(vat, state.currency);
+    sumTotal.textContent = money(subtotal + vat, state.currency);
+  }
+
+  Object.keys(QUESTIONNAIRE_DEFAULTS).forEach((key) => {
+    const input = document.getElementById(key);
+    if (!input) return;
+
+    input.addEventListener('input', () => {
+      state.questionnaire[key] = input.value;
+      updateServiceRows();
+    });
+
+    input.addEventListener('change', () => {
+      state.questionnaire[key] = input.value;
+      updateServiceRows();
+    });
   });
-  curSel.addEventListener('change', ()=>{
-    state.currency = curSel.value;
-    localStorage.setItem('ctm_cur', state.currency);
-    render();
-  });
 
-  // Обновление курсов (демо: просто меняем дату/индикатор)
-  btnRates.addEventListener('click', async ()=>{
-    await loadRates(true);
-  });
+  let emailSaveTimer = null;
 
-  // Смена e-mail
-  document.getElementById('btnChangeEmail').addEventListener('click', async ()=>{
-    const v = prompt('Укажите e-mail для отправки PDF (опционально):', state.email || '');
-    if(v === null) return;
+  emailInput.addEventListener('input', () => {
+    const normalized = normalizeEmail(emailInput.value);
+    state.email = normalized;
 
-    const normalized = normalizeEmail(v);
     if (!isValidEmail(normalized)) {
-      tg?.showAlert?.('Введите корректный e-mail или оставьте поле пустым.');
+      setEmailStatus('Введите корректный e-mail.', 'error');
       return;
     }
 
-    await persistEmail(normalized);
+    setEmailStatus(normalized ? 'Сохраняем e-mail…' : 'Можно оставить пустым, тогда PDF уйдёт только в чат.');
+    clearTimeout(emailSaveTimer);
+    emailSaveTimer = setTimeout(async () => {
+      await persistEmail(normalized);
+      setEmailStatus(normalized ? 'E-mail сохранён.' : 'E-mail очищен. PDF уйдёт только в чат.', 'ok');
+    }, 250);
   });
 
-  // Отправка расчёта
-  btnSend.addEventListener('click', async ()=>{
-    const hasSelectedRows = SERVICES.some((_, i)=> +((state.qty[i] ?? 0) || 0) > 0);
-    if (!hasSelectedRows) {
-      tg?.showAlert?.('Укажите количество хотя бы для одной услуги.');
+  emailInput.addEventListener('blur', async () => {
+    const normalized = normalizeEmail(emailInput.value);
+    if (!isValidEmail(normalized)) {
+      setEmailStatus('Введите корректный e-mail.', 'error');
+      return;
+    }
+
+    clearTimeout(emailSaveTimer);
+    await persistEmail(normalized);
+    setEmailStatus(normalized ? 'E-mail сохранён.' : 'E-mail очищен. PDF уйдёт только в чат.', 'ok');
+  });
+
+  vatSel.addEventListener('change', () => {
+    state.vat = vatSel.value;
+    localStorage.setItem('ctm_vat', state.vat);
+    updateServiceRows();
+  });
+
+  curSel.addEventListener('change', () => {
+    state.currency = curSel.value;
+    localStorage.setItem('ctm_cur', state.currency);
+    updateServiceRows();
+  });
+
+  btnRates.addEventListener('click', async () => {
+    await loadRates(true);
+  });
+
+  btnSend.addEventListener('click', async () => {
+    const questionnaire = computeQuestionnaire();
+    const rows = getCalculatedRows();
+
+    if (!rows.length) {
+      tg?.showAlert?.('Заполните анкету маркировки: сейчас нет ни одной расчетной услуги.');
+      if (!tg?.showAlert) {
+        alert('Заполните анкету маркировки: сейчас нет ни одной расчетной услуги.');
+      }
       return;
     }
 
     if (!isValidEmail(state.email)) {
-      tg?.showAlert?.('Сохранён некорректный e-mail. Укажите корректный адрес или очистите поле.');
+      tg?.showAlert?.('Сохранён некорректный e-mail. Исправьте адрес или очистите поле.');
+      if (!tg?.showAlert) {
+        alert('Сохранён некорректный e-mail. Исправьте адрес или очистите поле.');
+      }
       return;
     }
 
-    const subtotal = SERVICES.reduce((acc, s, i)=>{
-      const price = priceInCurrency(s.price, state.currency);
-      const qty = +((state.qty[i] ?? 0) || 0);
-      return acc + price * qty;
-    }, 0);
-    const vat = state.vat.startsWith('20') ? subtotal * 0.2 : 0;
+    const subtotal = rows.reduce((acc, row) => acc + row.sum, 0);
+    const vat = rows.reduce((acc, row) => acc + row.vat, 0);
     const total = subtotal + vat;
 
     const payload = {
@@ -570,13 +1175,14 @@
       currency: state.currency,
       vat: state.vat,
       rates: ratesText.textContent,
-      rows: SERVICES.map((s, i)=>({
-        title:s.title,
-        price: priceInCurrency(s.price, state.currency),
-        qty: +((state.qty[i] ?? 0) || 0),
-        unit: s.unit,
-        sum: priceInCurrency(s.price, state.currency) * (+((state.qty[i] ?? 0) || 0))
-      })).filter((row)=>row.qty > 0),
+      questionnaireSummary: getQuestionnaireSummary(questionnaire),
+      rows: rows.map((row) => ({
+        title: row.title,
+        price: row.price,
+        qty: row.qty,
+        unit: row.unit,
+        sum: row.sum
+      })),
       totals: { subtotal, vat, total },
       ts: new Date().toISOString()
     };
@@ -588,8 +1194,8 @@
     try{
       if (tg?.sendData) {
         tg?.HapticFeedback?.notificationOccurred?.('success');
-        tg.sendData(JSON.stringify({type:'order', payload}));
-        setTimeout(()=> tg?.close && tg.close(), 120);
+        tg.sendData(JSON.stringify({ type:'order', payload }));
+        setTimeout(() => tg?.close && tg.close(), 120);
         return;
       }
 
@@ -623,7 +1229,6 @@
     }
   });
 
-  // Первый прогон текста курсов
   (function initRates(){
     const cached = localStorage.getItem('ctm_rates');
     if (cached) {
@@ -637,6 +1242,9 @@
     setRatesText(new Date().toLocaleDateString('ru-RU'));
   })();
 
+  syncQuestionnaireUI();
+  buildServiceRows();
+  updateServiceRows();
   hydrateEmail();
   loadRates(false);
 </script>

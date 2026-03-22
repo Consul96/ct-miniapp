@@ -20,17 +20,6 @@ const WEBAPP_URL = (process.env.WEBAPP_URL || `${APP_BASE_URL}/`).trim();
 const TELEGRAM_BOT_TOKEN = (process.env.TELEGRAM_BOT_TOKEN || '').trim();
 const GENERATED_TTL_MS = 1000 * 60 * 30;
 
-const SERVICES = [
-  { title: 'Получение GTIN и КМ (контракт агента)', price: 0.6, unit: 'шт' },
-  { title: 'Формирование PDF с КМ (если контракт агента — бесплатно)', price: 3.0, unit: 'шт' },
-  { title: 'Подключение МЧД, получение GTIN и КМ в ЛК клиента', price: 15000, unit: 'фикс' },
-  { title: 'Консультация по вопросам маркировки, УПД', price: 2500, unit: 'ч' },
-  { title: 'Пакетирование', price: 1.5, unit: 'шт' },
-  { title: 'Создание шаблона этикеток', price: 2000, unit: 'фикс' },
-  { title: 'Оформление карточек в НКТ', price: 2.0, unit: 'шт' },
-  { title: 'Регистрация в ЧЗ/GS1 РУС', price: 15000, unit: 'фикс' }
-];
-
 const STATIC_TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'application/javascript; charset=utf-8',
@@ -130,20 +119,7 @@ async function fetchCbrRates(force = false) {
   return ratesCache;
 }
 
-function convertPrice(priceRub, currency, rates) {
-  if (currency === 'RUB') {
-    return priceRub;
-  }
-
-  const rate = rates[currency];
-  if (!rate) {
-    throw new Error(`Неизвестная валюта: ${currency}`);
-  }
-
-  return priceRub / rate;
-}
-
-function buildOrderFromPayload(rawPayload, rates) {
+function buildOrderFromPayload(rawPayload) {
   if (!rawPayload || typeof rawPayload !== 'object') {
     throw new Error('Пустой payload расчёта');
   }
@@ -156,33 +132,32 @@ function buildOrderFromPayload(rawPayload, rates) {
     throw new Error('Некорректный e-mail');
   }
 
-  const qtyByTitle = new Map();
-  for (const row of Array.isArray(rawPayload.rows) ? rawPayload.rows : []) {
-    const qty = Math.max(0, Math.floor(Number(row?.qty || 0)));
-    if (qty > 0 && typeof row?.title === 'string') {
-      qtyByTitle.set(row.title, qty);
-    }
-  }
+  const rows = (Array.isArray(rawPayload.rows) ? rawPayload.rows : [])
+    .map((row) => {
+      const title = String(row?.title || '').trim();
+      const unit = String(row?.unit || '').trim() || 'шт';
+      const qty = Math.max(0, Math.floor(Number(row?.qty || 0)));
+      const price = Math.max(0, Number(row?.price || 0));
 
-  const rows = SERVICES
-    .map((service) => {
-      const qty = qtyByTitle.get(service.title) || 0;
-      const price = convertPrice(service.price, currency, rates);
+      if (!title || qty <= 0) {
+        return null;
+      }
+
       const sum = price * qty;
       const vat = sum * vatRate;
       const total = sum + vat;
 
       return {
-        title: service.title,
+        title,
         qty,
-        unit: service.unit,
+        unit,
         price,
         sum,
         vat,
         total
       };
     })
-    .filter((row) => row.qty > 0);
+    .filter(Boolean);
 
   if (!rows.length) {
     throw new Error('Не выбраны услуги для расчёта');
@@ -191,15 +166,24 @@ function buildOrderFromPayload(rawPayload, rates) {
   const subtotal = rows.reduce((acc, row) => acc + row.sum, 0);
   const vat = rows.reduce((acc, row) => acc + row.vat, 0);
   const total = subtotal + vat;
+  const questionnaire = (Array.isArray(rawPayload.questionnaireSummary) ? rawPayload.questionnaireSummary : [])
+    .map((item) => ({
+      label: String(item?.label || '').trim(),
+      value: String(item?.value || '').trim()
+    }))
+    .filter((item) => item.label && item.value);
+
+  const createdAt = new Date(rawPayload.ts || Date.now());
 
   return {
     email,
     currency,
     vatLabel: vatRate === 0 ? '0%' : '20%',
-    ratesText: `Курсы ЦБ РФ: USD ${rates.USD} • EUR ${rates.EUR} • CNY ${rates.CNY} от ${rates.date}`,
+    ratesText: String(rawPayload.rates || '').trim(),
+    questionnaire,
     rows,
     totals: { subtotal, vat, total },
-    createdAt: new Date().toISOString()
+    createdAt: Number.isNaN(createdAt.getTime()) ? new Date().toISOString() : createdAt.toISOString()
   };
 }
 
@@ -223,9 +207,20 @@ async function generatePdf(order) {
   doc.fontSize(11).fillColor('#6b7280').text(`Дата: ${new Date(order.createdAt).toLocaleString('ru-RU')}`);
   doc.text(`Валюта: ${order.currency}`);
   doc.text(`Ставка НДС: ${order.vatLabel}`);
-  doc.text(order.ratesText);
+  if (order.ratesText) {
+    doc.text(order.ratesText);
+  }
   if (order.email) {
     doc.text(`E-mail: ${order.email}`);
+  }
+
+  if (order.questionnaire.length) {
+    doc.moveDown(0.8);
+    doc.fillColor('#111827').fontSize(13).text('Анкета маркировки');
+    doc.moveDown(0.4);
+    order.questionnaire.forEach((item) => {
+      doc.fontSize(10).fillColor('#4b5563').text(`${item.label}: ${item.value}`);
+    });
   }
 
   doc.moveDown();
@@ -338,8 +333,7 @@ async function sendTelegramDocument(chatId, pdfBuffer, filename, caption) {
 }
 
 async function processOrder(rawPayload, options = {}) {
-  const rates = await fetchCbrRates(false);
-  const order = buildOrderFromPayload(rawPayload, rates);
+  const order = buildOrderFromPayload(rawPayload);
   const pdfBuffer = await generatePdf(order);
   const filename = `ct-mentor-${new Date(order.createdAt).toISOString().slice(0, 10)}.pdf`;
   const emailResult = await sendOrderEmail(order, pdfBuffer, filename);
