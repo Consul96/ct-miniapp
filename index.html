@@ -5,31 +5,22 @@
   <meta name="viewport"
         content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
   <title>CT Mentor — калькулятор маркировки</title>
-  <meta name="color-scheme" content="light dark" />
+  <meta name="color-scheme" content="light" />
 
   <style>
     :root{
       --brand: #ff6a00;
+      --brand-strong: #e85d00;
       --ok: #16a34a;
       --warn: #ef4444;
-      --bg: #f7f8fb;
+      --bg: #f4f6fa;
       --card: #ffffff;
-      --ink: #0f172a;
-      --muted: #6b7280;
-      --stroke: #e5e7eb;
+      --ink: #111111;
+      --muted: #5f6675;
+      --stroke: #d8dee8;
       --field: #ffffff;
-      --shadow: 0 10px 30px rgba(2,6,23,.06);
-    }
-    @media (prefers-color-scheme: dark){
-      :root{
-        --bg: #0b1220;
-        --card: #101828;
-        --ink: #e5e7eb;
-        --muted: #94a3b8;
-        --stroke: #1f2937;
-        --field: #0f172a;
-        --shadow: 0 8px 28px rgba(0,0,0,.5);
-      }
+      --panel: #fbfcfe;
+      --shadow: 0 12px 32px rgba(15,23,42,.08);
     }
 
     *{ box-sizing:border-box; }
@@ -67,7 +58,7 @@
     .hero-panel{
       border:1px solid var(--stroke);
       border-radius:18px;
-      background:var(--field);
+      background:var(--panel);
       padding:18px;
     }
     .hero-panel--primary{
@@ -105,6 +96,7 @@
       font-weight:900;
       letter-spacing:-.02em;
       line-height:1.08;
+      color:var(--brand-strong);
     }
     .sub{
       max-width:58ch;
@@ -172,7 +164,7 @@
     .manager-title{
       font-size:15px;
       font-weight:800;
-      color:var(--ink);
+      color:var(--brand-strong);
     }
     .manager-sub{
       margin-top:4px;
@@ -220,7 +212,7 @@
       padding:12px 14px;
       border:1px solid var(--stroke);
       border-radius:14px;
-      background:var(--field);
+      background:#ffffff;
     }
     .field-card--accent{
       border-color:rgba(255,106,0,.18);
@@ -279,7 +271,7 @@
       gap:8px;
       padding:8px 10px;
       border:1px solid var(--stroke);
-      background:var(--field);
+      background:#ffffff;
       border-radius:12px;
       font-weight:600;
     }
@@ -287,7 +279,7 @@
       appearance:none;
       outline:none;
       border:1.5px solid var(--stroke);
-      background:var(--field);
+      background:#ffffff;
       color:var(--ink);
       border-radius:12px;
       padding:10px 12px;
@@ -322,7 +314,7 @@
       gap:8px;
       padding:8px 12px;
       border:1px dashed var(--stroke);
-      background:var(--field);
+      background:#ffffff;
       border-radius:12px;
       color:var(--muted);
       font-weight:700;
@@ -350,7 +342,7 @@
     .tab-btn{
       appearance:none;
       border:1.5px solid var(--stroke);
-      background:var(--field);
+      background:#ffffff;
       color:var(--muted);
       border-radius:999px;
       padding:10px 16px;
@@ -379,6 +371,7 @@
     .section-title{
       font-size:16px;
       font-weight:800;
+      color:var(--brand-strong);
     }
     .section-sub{
       color:var(--muted);
@@ -394,7 +387,7 @@
       padding:12px;
       border:1px solid var(--stroke);
       border-radius:16px;
-      background:rgba(148,163,184,.05);
+      background:#f9fbff;
     }
     .question.compact{
       padding-bottom:10px;
@@ -448,7 +441,7 @@
       padding:10px 12px;
       border:1px solid var(--stroke);
       border-radius:12px;
-      background:var(--field);
+      background:#ffffff;
       font-weight:800;
       font-variant-numeric:tabular-nums;
     }
