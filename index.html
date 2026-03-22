@@ -56,37 +56,175 @@
       overflow:hidden;
     }
     .header{
-      display:flex;
-      gap:18px;
-      justify-content:space-between;
-      align-items:flex-start;
       padding:18px 18px 8px;
-      flex-wrap:wrap;
+    }
+    .hero-grid{
+      display:grid;
+      grid-template-columns:minmax(0, 1.35fr) minmax(320px, .92fr);
+      gap:16px;
+      align-items:stretch;
+    }
+    .hero-panel{
+      border:1px solid var(--stroke);
+      border-radius:18px;
+      background:var(--field);
+      padding:18px;
+    }
+    .hero-panel--primary{
+      background:
+        radial-gradient(circle at top left, rgba(255,106,0,.12), transparent 34%),
+        linear-gradient(180deg, rgba(255,255,255,.98), rgba(247,248,251,.96));
+    }
+    .hero-panel--action{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      justify-content:space-between;
+    }
+    .hero-eyebrow{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      margin-bottom:10px;
+      color:var(--brand);
+      font-size:12px;
+      font-weight:900;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+    .hero-eyebrow::before{
+      content:'';
+      width:8px;
+      height:8px;
+      border-radius:999px;
+      background:var(--brand);
+      box-shadow:0 0 0 6px rgba(255,106,0,.12);
     }
     .title{
-      font-size:20px;
-      font-weight:800;
-      letter-spacing:.2px;
+      font-size:30px;
+      font-weight:900;
+      letter-spacing:-.02em;
+      line-height:1.08;
     }
     .sub{
-      margin-top:2px;
+      max-width:58ch;
+      margin-top:10px;
       color:var(--muted);
-      font-size:12px;
+      font-size:15px;
     }
 
-    .header-actions{
+    .hero-points{
       display:flex;
-      align-items:flex-end;
-      gap:12px;
       flex-wrap:wrap;
-      margin-left:auto;
+      gap:10px;
+      margin-top:16px;
+    }
+    .hero-point{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 12px;
+      border:1px solid rgba(15,23,42,.08);
+      border-radius:999px;
+      background:rgba(255,255,255,.8);
+      color:var(--ink);
+      font-size:13px;
+      font-weight:700;
+    }
+    .hero-point::before{
+      content:'';
+      width:6px;
+      height:6px;
+      border-radius:999px;
+      background:var(--brand);
+      flex:0 0 auto;
+    }
+    .manager-card{
+      display:flex;
+      justify-content:space-between;
+      gap:14px;
+      align-items:flex-start;
+      margin-top:16px;
+      padding:14px 16px;
+      border:1px solid rgba(15,23,42,.08);
+      border-radius:16px;
+      background:rgba(255,255,255,.84);
+    }
+    .manager-main{
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+    }
+    .manager-avatar{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      width:44px;
+      height:44px;
+      border-radius:14px;
+      background:rgba(255,106,0,.12);
+      color:var(--brand);
+      font-size:14px;
+      font-weight:900;
+      letter-spacing:.04em;
+      flex:0 0 auto;
+    }
+    .manager-title{
+      font-size:15px;
+      font-weight:800;
+      color:var(--ink);
+    }
+    .manager-sub{
+      margin-top:4px;
+      color:var(--muted);
+      font-size:13px;
+      max-width:42ch;
+    }
+    .manager-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      margin-top:8px;
+      color:var(--ok);
+      font-size:12px;
+      font-weight:800;
+    }
+    .manager-badge::before{
+      content:'';
+      width:7px;
+      height:7px;
+      border-radius:999px;
+      background:var(--ok);
+      box-shadow:0 0 0 5px rgba(22,163,74,.12);
+    }
+    .manager-link{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:11px 14px;
+      border:1.5px solid rgba(15,23,42,.1);
+      border-radius:12px;
+      background:#fff;
+      color:var(--ink);
+      font-weight:800;
+      text-decoration:none;
+      white-space:nowrap;
+      transition:.15s border-color ease, .15s transform ease;
+    }
+    .manager-link:hover{
+      border-color:var(--brand);
+      transform:translateY(-1px);
     }
     .field-card{
       min-width:280px;
-      padding:10px 12px;
+      padding:12px 14px;
       border:1px solid var(--stroke);
       border-radius:14px;
       background:var(--field);
+    }
+    .field-card--accent{
+      border-color:rgba(255,106,0,.18);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.7);
     }
     .field-label{
       display:block;
@@ -106,6 +244,27 @@
     }
     .field-note.ok{ color:var(--ok); }
     .field-note.error{ color:var(--warn); }
+    .action-stack{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    .action-note{
+      padding:14px 16px;
+      border:1px solid var(--stroke);
+      border-radius:14px;
+      background:rgba(248,250,252,.92);
+    }
+    .action-note-title{
+      font-size:14px;
+      font-weight:800;
+      color:var(--ink);
+    }
+    .action-note-copy{
+      margin-top:6px;
+      color:var(--muted);
+      font-size:13px;
+    }
 
     .controls{
       display:flex;
@@ -361,11 +520,17 @@
         padding-left:14px;
         padding-right:14px;
       }
-      .header-actions{
+      .hero-grid{
+        grid-template-columns:1fr;
+      }
+      .manager-card{
+        flex-direction:column;
+      }
+      .manager-link{
         width:100%;
       }
       .field-card,
-      .header-actions .btn,
+      .hero-panel--action .btn,
       .chip,
       .rates{
         width:100%;
@@ -450,18 +615,47 @@
 <div class="wrap">
   <div class="card">
     <div class="header">
-      <div>
-        <div class="title">Калькулятор услуг по маркировке</div>
-        <div class="sub">Заполните параметры партии, а калькулятор сам посчитает нужные операции по маркировке. Ставки можно скорректировать вручную в RUB.</div>
-      </div>
+      <div class="hero-grid">
+        <section class="hero-panel hero-panel--primary">
+          <div class="hero-eyebrow">CT Mentor</div>
+          <div class="title">Расчёт стоимости услуг по маркировке</div>
+          <div class="sub">Укажите параметры партии и получите предварительный коммерческий расчёт с актуальными курсами ЦБ, PDF для согласования и поддержкой менеджера по сложным кейсам.</div>
 
-      <div class="header-actions">
-        <div class="field-card">
-          <label class="field-label" for="emailInput">e-mail для PDF</label>
-          <input id="emailInput" class="input" type="email" inputmode="email" placeholder="name@example.com" autocomplete="email" />
-          <span id="emailStatus" class="field-note">Можно оставить пустым, тогда PDF уйдёт только в чат.</span>
-        </div>
-        <button id="btnSend" class="btn">Получить расчёт</button>
+          <div class="hero-points">
+            <span class="hero-point">PDF в Telegram и на e-mail</span>
+            <span class="hero-point">Актуальные курсы ЦБ</span>
+            <span class="hero-point">Поддержка по GTIN, КМ и документам</span>
+          </div>
+
+          <div class="manager-card">
+            <div class="manager-main">
+              <div class="manager-avatar">CM</div>
+              <div>
+                <div class="manager-title">Ваш менеджер CT Mentor</div>
+                <div class="manager-sub">Если нужно быстро уточнить сценарий маркировки, состав услуг или документы, можно сразу написать в Telegram и допроверить расчёт до отправки PDF.</div>
+                <div class="manager-badge">На связи в рабочее время</div>
+              </div>
+            </div>
+            <a id="managerTelegramLink" class="manager-link" href="https://t.me/ctmentor_support" target="_blank" rel="noopener">Написать в Telegram</a>
+          </div>
+        </section>
+
+        <aside class="hero-panel hero-panel--action">
+          <div class="action-stack">
+            <div class="field-card field-card--accent">
+              <label class="field-label" for="emailInput">Куда отправить PDF расчёта</label>
+              <input id="emailInput" class="input" type="email" inputmode="email" placeholder="name@example.com" autocomplete="email" />
+              <span id="emailStatus" class="field-note">Можно оставить пустым, тогда PDF придёт только в Telegram.</span>
+            </div>
+
+            <div class="action-note">
+              <div class="action-note-title">Что делать дальше</div>
+              <div class="action-note-copy">Заполните параметры партии ниже и нажмите кнопку. Мы соберём состав услуг, пересчитаем сумму и подготовим PDF для согласования.</div>
+            </div>
+          </div>
+
+          <button id="btnSend" class="btn">Получить расчёт PDF</button>
+        </aside>
       </div>
     </div>
 
@@ -490,8 +684,8 @@
     </div>
 
     <div class="tabs">
-      <button id="tabClient" class="tab-btn active" type="button">Для клиента</button>
-      <button id="tabManager" class="tab-btn" type="button">Расчёт и тарифы</button>
+      <button id="tabClient" class="tab-btn active" type="button">Параметры расчёта</button>
+      <button id="tabManager" class="tab-btn" type="button">Тарифы менеджера</button>
     </div>
 
     <div id="panelClient" class="tab-panel">
@@ -728,6 +922,7 @@
   const EMAIL_KEY = 'ctm_email';
   const QUESTIONNAIRE_KEY = 'ctm_questionnaire_v2';
   const SERVICE_RATES_KEY = 'ctm_service_rates_v2';
+  const MANAGER_TELEGRAM_URL = 'https://t.me/ctmentor_support';
 
   tg?.ready?.();
   tg?.expand?.();
@@ -851,6 +1046,7 @@
   const ratesState = document.getElementById('ratesState');
   const btnRates = document.getElementById('btnRates');
   const btnSend = document.getElementById('btnSend');
+  const managerTelegramLink = document.getElementById('managerTelegramLink');
   const tabClient = document.getElementById('tabClient');
   const tabManager = document.getElementById('tabManager');
   const panelClient = document.getElementById('panelClient');
@@ -865,6 +1061,7 @@
   vatSel.value = state.vat;
   curSel.value = state.currency;
   emailInput.value = state.email;
+  managerTelegramLink.href = MANAGER_TELEGRAM_URL;
 
   function normalizeEmail(value){
     return (value || '').trim().toLowerCase();
@@ -1237,6 +1434,12 @@
 
   btnRates.addEventListener('click', async () => {
     await loadRates(true);
+  });
+
+  managerTelegramLink.addEventListener('click', (event) => {
+    if (!tg?.openTelegramLink) return;
+    event.preventDefault();
+    tg.openTelegramLink(MANAGER_TELEGRAM_URL);
   });
 
   tabClient.addEventListener('click', () => setActiveTab('client'));
