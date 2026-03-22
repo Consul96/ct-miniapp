@@ -90,11 +90,11 @@
     }
     .field-label{
       display:block;
-      margin-bottom:6px;
-      color:var(--muted);
-      font-size:12px;
-      font-weight:700;
-      letter-spacing:.02em;
+      margin-bottom:10px;
+      color:var(--ink);
+      font-size:13px;
+      font-weight:900;
+      letter-spacing:.03em;
       text-transform:uppercase;
     }
     .field-note{
@@ -424,7 +424,7 @@
     <div class="header">
       <div>
         <div class="title">Калькулятор услуг по маркировке</div>
-        <div class="sub">Заполните анкету по партии, а калькулятор сам посчитает нужные операции по маркировке. Ставки можно скорректировать вручную в RUB.</div>
+        <div class="sub">Заполните параметры партии, а калькулятор сам посчитает нужные операции по маркировке. Ставки можно скорректировать вручную в RUB.</div>
       </div>
 
       <div class="header-actions">
@@ -464,8 +464,8 @@
     <div class="section">
       <div class="section-head">
         <div>
-          <div class="section-title">Анкета по партии</div>
-          <div class="section-sub">Поля повторяют логику анкеты маркировки: состав партии, сценарий нанесения, документы и сопровождение.</div>
+          <div class="section-title">Параметры партии</div>
+          <div class="section-sub">Укажите объём партии, сценарий маркировки, документы и нужное сопровождение.</div>
         </div>
       </div>
 
@@ -673,7 +673,7 @@
       </div>
     </div>
 
-    <div class="hint">PDF придёт в этот чат, а при указанном e-mail ещё и на почту. Объём услуг теперь считается по анкете партии, а не вводится вручную по каждой строке.</div>
+    <div class="hint">PDF придёт в этот чат, а при указанном e-mail ещё и на почту. Объём услуг считается автоматически по параметрам партии.</div>
   </div>
 </div>
 
@@ -811,6 +811,7 @@
   const emailInput = document.getElementById('emailInput');
   const emailStatus = document.getElementById('emailStatus');
   const boxCountInput = document.getElementById('boxCount');
+  let apiAvailable = null;
 
   vatSel.value = state.vat;
   curSel.value = state.currency;
@@ -844,6 +845,23 @@
     ratesState.textContent = message;
     ratesState.style.color = isError ? 'var(--warn)' : '';
     setTimeout(() => { ratesState.hidden = true; }, 1500);
+  }
+
+  async function checkApiAvailability(){
+    if (tg?.sendData) {
+      apiAvailable = true;
+      return true;
+    }
+
+    try{
+      const res = await fetch(`${API_BASE}/health`, { cache:'no-store' });
+      const data = await res.json();
+      apiAvailable = Boolean(res.ok && data.ok);
+      return apiAvailable;
+    }catch(e){
+      apiAvailable = false;
+      return false;
+    }
   }
 
   function setEmailStatus(message, mode = ''){
@@ -1151,9 +1169,9 @@
     const rows = getCalculatedRows();
 
     if (!rows.length) {
-      tg?.showAlert?.('Заполните анкету маркировки: сейчас нет ни одной расчетной услуги.');
+      tg?.showAlert?.('Заполните параметры партии: сейчас нет ни одной расчётной услуги.');
       if (!tg?.showAlert) {
-        alert('Заполните анкету маркировки: сейчас нет ни одной расчетной услуги.');
+        alert('Заполните параметры партии: сейчас нет ни одной расчётной услуги.');
       }
       return;
     }
@@ -1163,6 +1181,12 @@
       if (!tg?.showAlert) {
         alert('Сохранён некорректный e-mail. Исправьте адрес или очистите поле.');
       }
+      return;
+    }
+
+    const canUseApi = await checkApiAvailability();
+    if (!tg?.sendData && !canUseApi) {
+      alert('Не удалось сформировать расчёт: локальный сервер недоступен. Запустите `npm start` и откройте страницу через http://127.0.0.1:3000.');
       return;
     }
 
@@ -1220,7 +1244,7 @@
     }catch(e){
       const message = tg?.sendData
         ? 'Не удалось передать данные в бота. Откройте калькулятор из Telegram и попробуйте снова.'
-        : `Не удалось сформировать расчёт: ${e.message}`;
+        : 'Не удалось сформировать расчёт. Проверьте, что локальный сервер запущен через `npm start`, и обновите страницу.';
       alert(message);
       console.error(e);
     }finally{
@@ -1246,6 +1270,7 @@
   buildServiceRows();
   updateServiceRows();
   hydrateEmail();
+  checkApiAvailability();
   loadRates(false);
 </script>
 </body>
