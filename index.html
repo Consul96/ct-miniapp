@@ -374,17 +374,73 @@
       align-items:center;
       margin-bottom:16px;
     }
-    .an-select{
-      appearance:none;
+    .an-search-wrap{
+      position:relative;
+      min-width:200px;
+      flex:1 1 200px;
+      max-width:320px;
+    }
+    .an-search-input{
+      width:100%;
       border:1.5px solid var(--stroke);
       background:var(--field);
       color:var(--ink);
       border-radius:10px;
-      padding:8px 12px;
+      padding:8px 36px 8px 12px;
       font:inherit;
       font-size:14px;
-      min-width:140px;
+      outline:none;
+      transition:.15s border-color;
+    }
+    .an-search-input:focus{
+      border-color:var(--brand);
+    }
+    .an-search-clear{
+      position:absolute;
+      right:10px;
+      top:50%;
+      transform:translateY(-50%);
+      background:none;
+      border:none;
       cursor:pointer;
+      color:var(--muted);
+      font-size:16px;
+      padding:0;
+      line-height:1;
+      display:none;
+    }
+    .an-search-clear.visible{ display:block; }
+    .an-dropdown{
+      position:absolute;
+      top:calc(100% + 4px);
+      left:0;
+      right:0;
+      background:var(--card);
+      border:1.5px solid var(--stroke);
+      border-radius:12px;
+      box-shadow:0 8px 24px rgba(15,23,42,.12);
+      z-index:200;
+      max-height:220px;
+      overflow-y:auto;
+      display:none;
+    }
+    .an-dropdown.open{ display:block; }
+    .an-dropdown-item{
+      padding:9px 14px;
+      cursor:pointer;
+      font-size:14px;
+      border-bottom:1px solid var(--stroke);
+      transition:.1s background;
+    }
+    .an-dropdown-item:last-child{ border-bottom:none; }
+    .an-dropdown-item:hover, .an-dropdown-item.focused{
+      background:rgba(255,106,0,.08);
+    }
+    .an-dropdown-item b{ color:var(--brand); }
+    .an-dropdown-empty{
+      padding:10px 14px;
+      color:var(--muted);
+      font-size:13px;
     }
     .an-period-btn{
       appearance:none;
@@ -1091,7 +1147,11 @@
       </div>
       <div style="padding:0 18px 18px">
         <div class="an-filters">
-          <select id="anPinSelect" class="an-select"><option value="">— выберите ПИН —</option></select>
+          <div class="an-search-wrap">
+            <input id="anPinInput" class="an-search-input" type="text" placeholder="Поиск ПИН или менеджера…" autocomplete="off" spellcheck="false" />
+            <button id="anPinClear" class="an-search-clear" type="button" title="Очистить">✕</button>
+            <div id="anDropdown" class="an-dropdown"></div>
+          </div>
           <button class="an-period-btn active" data-days="7" type="button">7 дней</button>
           <button class="an-period-btn" data-days="30" type="button">30 дней</button>
           <button class="an-period-btn" data-days="90" type="button">90 дней</button>
@@ -1780,7 +1840,9 @@
     let anChartFields = null;
     let anChartTimeseries = null;
 
-    const elPinSelect    = document.getElementById('anPinSelect');
+    const elPinInput     = document.getElementById('anPinInput');
+    const elPinClear     = document.getElementById('anPinClear');
+    const elDropdown     = document.getElementById('anDropdown');
     const elManagerTag   = document.getElementById('anManagerTag');
     const elLoading      = document.getElementById('anLoading');
     const elEmpty        = document.getElementById('anEmpty');
@@ -1792,6 +1854,9 @@
     const elFactories    = document.getElementById('anFactories');
     const elRefresh      = document.getElementById('anRefresh');
     const periodBtns     = document.querySelectorAll('.an-period-btn');
+
+    let allPins = [];       // [{pin, manager}]
+    let focusedIdx = -1;
 
     function anSetLoading(on){
       elLoading.hidden = !on;
@@ -1812,10 +1877,108 @@
       if(anCurrentPin) anLoad(true);
     });
 
-    elPinSelect.addEventListener('change', () => {
-      anCurrentPin = elPinSelect.value;
-      if(anCurrentPin) anLoad(false);
-      else { elContent.hidden = true; elEmpty.hidden = true; elManagerTag.hidden = true; }
+    // ── Autocomplete ──────────────────────────────────
+    function highlight(text, q){
+      if(!q) return text;
+      const idx = text.toLowerCase().indexOf(q.toLowerCase());
+      if(idx < 0) return text;
+      return text.slice(0, idx) + '<b>' + text.slice(idx, idx + q.length) + '</b>' + text.slice(idx + q.length);
+    }
+
+    function renderDropdown(query){
+      focusedIdx = -1;
+      elDropdown.innerHTML = '';
+      const q = query.trim();
+      const filtered = q
+        ? allPins.filter(p => p.pin.toLowerCase().includes(q.toLowerCase()) ||
+                              (p.manager || '').toLowerCase().includes(q.toLowerCase()))
+        : allPins;
+
+      if(!filtered.length){
+        elDropdown.innerHTML = `<div class="an-dropdown-empty">Ничего не найдено</div>`;
+      } else {
+        filtered.forEach((p, i) => {
+          const label = p.pin + (p.manager ? ` — ${p.manager}` : '');
+          const hlLabel = highlight(label, q);
+          const item = document.createElement('div');
+          item.className = 'an-dropdown-item';
+          item.innerHTML = hlLabel;
+          item.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            selectPin(p);
+          });
+          elDropdown.appendChild(item);
+        });
+      }
+      elDropdown.classList.add('open');
+    }
+
+    function closeDropdown(){
+      elDropdown.classList.remove('open');
+      focusedIdx = -1;
+    }
+
+    function selectPin(p){
+      anCurrentPin = p.pin;
+      elPinInput.value = p.pin + (p.manager ? ` — ${p.manager}` : '');
+      elPinClear.classList.add('visible');
+      closeDropdown();
+      anLoad(false);
+    }
+
+    function clearPin(){
+      anCurrentPin = '';
+      elPinInput.value = '';
+      elPinClear.classList.remove('visible');
+      closeDropdown();
+      elContent.hidden = true;
+      elEmpty.hidden = true;
+      elManagerTag.hidden = true;
+    }
+
+    elPinInput.addEventListener('input', () => {
+      const q = elPinInput.value.trim();
+      elPinClear.classList.toggle('visible', q.length > 0);
+      if(!anCurrentPin || elPinInput.value !== (anCurrentPin)) {
+        anCurrentPin = '';
+      }
+      renderDropdown(elPinInput.value);
+    });
+
+    elPinInput.addEventListener('focus', () => {
+      renderDropdown(elPinInput.value);
+    });
+
+    elPinInput.addEventListener('blur', () => {
+      // slight delay so mousedown on item fires first
+      setTimeout(closeDropdown, 150);
+    });
+
+    elPinInput.addEventListener('keydown', (e) => {
+      const items = elDropdown.querySelectorAll('.an-dropdown-item');
+      if(e.key === 'ArrowDown'){
+        e.preventDefault();
+        focusedIdx = Math.min(focusedIdx + 1, items.length - 1);
+        items.forEach((el, i) => el.classList.toggle('focused', i === focusedIdx));
+      } else if(e.key === 'ArrowUp'){
+        e.preventDefault();
+        focusedIdx = Math.max(focusedIdx - 1, 0);
+        items.forEach((el, i) => el.classList.toggle('focused', i === focusedIdx));
+      } else if(e.key === 'Enter'){
+        e.preventDefault();
+        if(focusedIdx >= 0 && items[focusedIdx]){
+          items[focusedIdx].dispatchEvent(new MouseEvent('mousedown'));
+        }
+      } else if(e.key === 'Escape'){
+        closeDropdown();
+      }
+    });
+
+    elPinClear.addEventListener('click', clearPin);
+
+    // close dropdown on outside click
+    document.addEventListener('click', (e) => {
+      if(!e.target.closest('.an-search-wrap')) closeDropdown();
     });
 
     async function anLoadPins(){
@@ -1823,12 +1986,7 @@
         const r = await fetch(`${AN}/pins`);
         if(!r.ok) return;
         const pins = await r.json();
-        pins.forEach(p => {
-          const o = document.createElement('option');
-          o.value = p.pin;
-          o.textContent = p.pin + (p.manager ? ` — ${p.manager}` : '');
-          elPinSelect.appendChild(o);
-        });
+        allPins = pins;
       }catch(e){ /* silent */ }
     }
 
