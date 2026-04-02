@@ -1985,8 +1985,8 @@
       try{
         const r = await fetch(`${AN}/pins`);
         if(!r.ok) return;
-        const pins = await r.json();
-        allPins = pins;
+        const data = await r.json();
+        allPins = Array.isArray(data) ? data : (data.pins || []);
       }catch(e){ /* silent */ }
     }
 
