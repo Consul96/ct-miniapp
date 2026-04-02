@@ -1856,6 +1856,8 @@
     const periodBtns     = document.querySelectorAll('.an-period-btn');
 
     let allPins = [];       // [{pin, manager}]
+    let pinsLoading = false;
+    let pinsError = false;
     let focusedIdx = -1;
 
     function anSetLoading(on){
@@ -1888,6 +1890,18 @@
     function renderDropdown(query){
       focusedIdx = -1;
       elDropdown.innerHTML = '';
+
+      if(pinsLoading){
+        elDropdown.innerHTML = `<div class="an-dropdown-empty">⏳ Загрузка…</div>`;
+        elDropdown.classList.add('open');
+        return;
+      }
+      if(pinsError){
+        elDropdown.innerHTML = `<div class="an-dropdown-empty">⚠️ Не удалось загрузить ПИН — проверьте, запущен ли бот</div>`;
+        elDropdown.classList.add('open');
+        return;
+      }
+
       const q = query.trim();
       const filtered = q
         ? allPins.filter(p => p.pin.toLowerCase().includes(q.toLowerCase()) ||
@@ -1895,10 +1909,10 @@
         : allPins;
 
       if(!filtered.length){
-        elDropdown.innerHTML = `<div class="an-dropdown-empty">Ничего не найдено</div>`;
+        elDropdown.innerHTML = `<div class="an-dropdown-empty">${q ? 'Ничего не найдено' : 'Список ПИН пуст'}</div>`;
       } else {
-        filtered.forEach((p, i) => {
-          const label = p.pin + (p.manager ? ` — ${p.manager}` : '');
+        filtered.slice(0, 50).forEach((p) => {
+          const label = p.pin + (p.manager && p.manager !== '—' ? ` — ${p.manager}` : '');
           const hlLabel = highlight(label, q);
           const item = document.createElement('div');
           item.className = 'an-dropdown-item';
@@ -1946,7 +1960,12 @@
     });
 
     elPinInput.addEventListener('focus', () => {
-      renderDropdown(elPinInput.value);
+      // Re-try loading if previous attempt failed or list is empty
+      if(!pinsLoading && (pinsError || !allPins.length)){
+        anLoadPins().then(() => renderDropdown(elPinInput.value));
+      } else {
+        renderDropdown(elPinInput.value);
+      }
     });
 
     elPinInput.addEventListener('blur', () => {
@@ -1982,12 +2001,25 @@
     });
 
     async function anLoadPins(){
+      if(pinsLoading) return;
+      pinsLoading = true;
+      pinsError = false;
+      elPinInput.placeholder = 'Загрузка списка ПИН…';
       try{
         const r = await fetch(`${AN}/pins`);
-        if(!r.ok) return;
+        if(!r.ok){ pinsError = true; return; }
         const data = await r.json();
         allPins = Array.isArray(data) ? data : (data.pins || []);
-      }catch(e){ /* silent */ }
+        if(!allPins.length) pinsError = true;
+      }catch(e){
+        pinsError = true;
+        console.warn('[analytics] /api/analytics/pins error:', e);
+      } finally {
+        pinsLoading = false;
+        elPinInput.placeholder = pinsError
+          ? 'Нет данных — бот не запущен?'
+          : 'Поиск ПИН или менеджера…';
+      }
     }
 
     async function anLoad(invalidate){
