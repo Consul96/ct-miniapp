@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Аналитика заявок — CT Mentor</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#F3F4F6;--card:#fff;--soft:#FFF8F1;--line:#E2E8F0;
+  --text:#0F172A;--muted:#64748B;--accent:#F97316;--accent2:#3B82F6;
+  --green:#22C55E;--red:#EF4444;--yellow:#EAB308;
+  --r:16px;--shadow:0 8px 32px rgba(2,6,23,.07);
+  --fs-12:12px;--fs-14:14px;--fs-16:16px;
+}
+[data-theme="dark"]{
+  --bg:#0B1220;--card:#0F172A;--soft:#1B2433;--line:#1F2937;
+  --text:#E5E7EB;--muted:#9CA3AF;--shadow:0 8px 32px rgba(0,0,0,.35);
+}
+html{visibility:hidden}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%;background:var(--bg);color:var(--text);
+  font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;font-size:var(--fs-14)}
+.wrap{max-width:960px;margin:0 auto;padding:16px}
+
+.filter-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+  background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:12px 16px;box-shadow:var(--shadow);margin-bottom:14px}
+.filter-bar select{height:36px;border:1px solid var(--line);border-radius:10px;
+  background:var(--soft);color:var(--text);padding:0 10px;font-size:var(--fs-14);
+  cursor:pointer;flex:1;min-width:160px;max-width:320px}
+.period-tabs{display:flex;gap:6px}
+.period-tabs button{height:36px;padding:0 14px;border:1px solid var(--line);
+  border-radius:20px;background:var(--soft);color:var(--text);cursor:pointer;
+  font-size:var(--fs-14);transition:background .15s,color .15s}
+.period-tabs button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-refresh{height:36px;padding:0 14px;background:var(--accent);color:#fff;
+  border:none;border-radius:20px;cursor:pointer;font-size:var(--fs-14);font-weight:700;
+  white-space:nowrap}
+.manager-tag{font-size:var(--fs-12);color:var(--muted);padding:4px 10px;
+  border:1px solid var(--line);border-radius:20px;white-space:nowrap}
+
+.state{text-align:center;padding:48px 16px;color:var(--muted);font-size:var(--fs-16)}
+.state.error{color:var(--red)}
+.spinner{width:32px;height:32px;border:3px solid var(--line);
+  border-top-color:var(--accent);border-radius:50%;
+  animation:spin .7s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+  gap:10px;margin-bottom:14px}
+.kpi-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:14px 16px;box-shadow:var(--shadow)}
+.kpi-label{font-size:var(--fs-12);color:var(--muted);margin-bottom:6px;
+  text-transform:uppercase;letter-spacing:.04em}
+.kpi-value{font-size:24px;font-weight:800;line-height:1}
+.kpi-value.green{color:var(--green)}
+.kpi-value.red{color:var(--red)}
+.kpi-value.blue{color:var(--accent2)}
+
+.chart-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:18px;box-shadow:var(--shadow);margin-bottom:14px}
+.chart-card h3{font-size:var(--fs-14);font-weight:700;margin-bottom:14px;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.05em}
+.chart-wrap{position:relative}
+
+.table-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden}
+.table-card h3{font-size:var(--fs-14);font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.05em;padding:16px 16px 10px}
+table{width:100%;border-collapse:collapse}
+thead th{background:var(--soft);color:var(--muted);font-size:var(--fs-12);
+  text-transform:uppercase;letter-spacing:.04em;padding:10px 14px;text-align:left;
+  position:sticky;top:0}
+tbody tr.factory-row{cursor:pointer;transition:background .12s}
+tbody tr.factory-row:hover{background:var(--soft)}
+tbody td{padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:middle;
+  font-size:var(--fs-14)}
+td.td-count{font-weight:800;text-align:right;white-space:nowrap}
+.expand-row td{padding:0;border-bottom:1px solid var(--line)}
+.expand-inner{padding:10px 14px 14px 28px;background:var(--soft);
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px}
+.field-pill{display:inline-flex;align-items:center;gap:4px;
+  background:var(--card);border:1px solid var(--line);border-radius:20px;
+  padding:4px 10px;font-size:var(--fs-12)}
+.field-pill .cnt{font-weight:700;color:var(--accent)}
+.expand-row{display:none}
+.expand-row.open{display:table-row}
+.toggle-icon{transition:transform .2s;display:inline-block}
+.factory-row.open .toggle-icon{transform:rotate(90deg)}
+
+.footer{text-align:center;color:var(--muted);font-size:var(--fs-12);
+  padding:10px 0 24px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="filter-bar">
+    <select id="pin-select">
+      <option value="">— выберите PIN —</option>
+    </select>
+
+    <div class="period-tabs">
+      <button data-days="7">7 дн.</button>
+      <button data-days="30" class="active">30 дн.</button>
+      <button data-days="90">90 дн.</button>
+    </div>
+
+    <button class="btn-refresh" id="refresh-btn" onclick="loadAnalytics(true)">↺</button>
+    <span class="manager-tag" id="manager-tag" style="display:none"></span>
+  </div>
+
+  <div id="st-idle" class="state">Выберите PIN для просмотра аналитики</div>
+  <div id="st-loading" class="state" style="display:none">
+    <div class="spinner"></div>Загрузка данных из 1С…
+  </div>
+  <div id="st-error" class="state error" style="display:none"></div>
+  <div id="st-empty" class="state" style="display:none">Нет данных за выбранный период</div>
+
+  <div id="dashboard" style="display:none">
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Корректировки</div>
+        <div class="kpi-value" id="kpi-corr">—</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Излишки</div>
+        <div class="kpi-value green" id="kpi-izl">—</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Недостачи</div>
+        <div class="kpi-value red" id="kpi-ndst">—</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Фабрик</div>
+        <div class="kpi-value blue" id="kpi-fact">—</div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h3>ТОП полей по изменениям</h3>
+      <div class="chart-wrap" style="max-height:320px">
+        <canvas id="chart-fields"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h3>Динамика по дням</h3>
+      <div class="chart-wrap" style="height:200px">
+        <canvas id="chart-timeline"></canvas>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <h3>ТОП фабрика / артикул</h3>
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            <th>Фабрика</th>
+            <th>Артикул</th>
+            <th style="text-align:right">Кол-во</th>
+          </tr>
+        </thead>
+        <tbody id="factories-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="footer">CT Mentor · Аналитика заявок</div>
+</div>
+
+<script>
+const tg = window.Telegram?.WebApp;
+const scheme = tg?.colorScheme || 'light';
+document.documentElement.setAttribute('data-theme', scheme === 'dark' ? 'dark' : 'light');
+tg?.expand?.();
+tg?.ready?.();
+requestAnimationFrame(() => document.documentElement.style.visibility = 'visible');
+
+const API = '/api/analytics';
+
+let _currentData = null;
+let _fieldsChart = null;
+let _timelineChart = null;
+let _selectedDays = 30;
+
+function showState(id) {
+  ['st-idle', 'st-loading', 'st-error', 'st-empty', 'dashboard'].forEach((stateId) => {
+    document.getElementById(stateId).style.display = stateId === id ? '' : 'none';
+  });
+}
+
+function isDark() {
+  return document.documentElement.getAttribute('data-theme') === 'dark';
+}
+
+function chartColors() {
+  return isDark()
+    ? { grid: '#1F2937', tick: '#9CA3AF', bg: '#0F172A' }
+    : { grid: '#E2E8F0', tick: '#64748B', bg: '#fff' };
+}
+
+async function loadPins() {
+  try {
+    const resp = await fetch(`${API}/pins`);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const { pins } = await resp.json();
+    const sel = document.getElementById('pin-select');
+    pins.forEach(({ pin, manager }) => {
+      const opt = document.createElement('option');
+      opt.value = pin;
+      opt.textContent = manager && manager !== '—' ? `${pin} — ${manager}` : pin;
+      sel.appendChild(opt);
+    });
+  } catch (e) {
+    console.error('loadPins failed', e);
+  }
+}
+
+async function loadAnalytics(forceRefresh = false) {
+  const pin = document.getElementById('pin-select').value;
+  if (!pin) {
+    showState('st-idle');
+    return;
+  }
+
+  showState('st-loading');
+
+  const url = forceRefresh
+    ? `${API}/pin?pin=${encodeURIComponent(pin)}&days=${_selectedDays}&_bust=${Date.now()}`
+    : `${API}/pin?pin=${encodeURIComponent(pin)}&days=${_selectedDays}`;
+
+  if (forceRefresh) {
+    try {
+      await fetch(`${API}/invalidate?pin=${encodeURIComponent(pin)}&days=${_selectedDays}`, { method: 'POST' });
+    } catch (_) {}
+  }
+
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({ error: `HTTP ${resp.status}` }));
+      throw new Error(err.error || `HTTP ${resp.status}`);
+    }
+    _currentData = await resp.json();
+  } catch (e) {
+    document.getElementById('st-error').textContent = `Ошибка: ${e.message}`;
+    showState('st-error');
+    return;
+  }
+
+  const d = _currentData;
+  const hasData = d.summary && (
+    d.summary.total_corrects > 0 || d.summary.surplus > 0 || d.summary.shortage > 0
+  );
+  if (!hasData && (!d.top_factories || d.top_factories.length === 0)) {
+    showState('st-empty');
+    return;
+  }
+
+  renderDashboard(d);
+  showState('dashboard');
+}
+
+function renderDashboard(d) {
+  const mgTag = document.getElementById('manager-tag');
+  if (d.manager && d.manager !== '—') {
+    mgTag.textContent = `👤 ${d.manager}`;
+    mgTag.style.display = '';
+  } else {
+    mgTag.style.display = 'none';
+  }
+
+  document.getElementById('kpi-corr').textContent = d.summary.total_corrects ?? '—';
+  document.getElementById('kpi-izl').textContent = d.summary.surplus ?? '—';
+  document.getElementById('kpi-ndst').textContent = d.summary.shortage ?? '—';
+  document.getElementById('kpi-fact').textContent = d.summary.unique_factories ?? '—';
+
+  renderFieldsChart(d.top_fields || []);
+  renderTimelineChart(d.timeseries || []);
+  renderFactoriesTable(d.top_factories || []);
+}
+
+function renderFieldsChart(topFields) {
+  const labels = topFields.map((field) => field.field).reverse();
+  const values = topFields.map((field) => field.count).reverse();
+  const colors = chartColors();
+
+  if (_fieldsChart) {
+    _fieldsChart.destroy();
+    _fieldsChart = null;
+  }
+
+  const canvas = document.getElementById('chart-fields');
+  canvas.parentElement.style.maxHeight = `${Math.max(160, labels.length * 28 + 40)}px`;
+  canvas.style.height = `${Math.max(160, labels.length * 28 + 40)}px`;
+
+  _fieldsChart = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Изменений',
+        data: values,
+        backgroundColor: '#F97316cc',
+        borderColor: '#F97316',
+        borderWidth: 1,
+        borderRadius: 4
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: {
+          grid: { color: colors.grid },
+          ticks: { color: colors.tick, font: { size: 12 } },
+          beginAtZero: true
+        },
+        y: {
+          grid: { display: false },
+          ticks: { color: colors.tick, font: { size: 12 } }
+        }
+      }
+    }
+  });
+}
+
+function renderTimelineChart(timeseries) {
+  const colors = chartColors();
+  const labels = timeseries.map((point) => point.date);
+  const corrData = timeseries.map((point) => point.count);
+  const izlData = timeseries.map((point) => point.surplus);
+  const ndstData = timeseries.map((point) => point.shortage);
+
+  const hasIzl = izlData.some((value) => value > 0);
+  const hasNdst = ndstData.some((value) => value > 0);
+
+  if (_timelineChart) {
+    _timelineChart.destroy();
+    _timelineChart = null;
+  }
+
+  const datasets = [{
+    label: 'Корректировки',
+    data: corrData,
+    borderColor: '#F97316',
+    backgroundColor: '#F9731620',
+    fill: true,
+    tension: 0.3,
+    pointRadius: corrData.length > 30 ? 0 : 3
+  }];
+  if (hasIzl) datasets.push({
+    label: 'Излишки',
+    data: izlData,
+    borderColor: '#22C55E',
+    backgroundColor: '#22C55E20',
+    fill: false,
+    tension: 0.3,
+    pointRadius: 0
+  });
+  if (hasNdst) datasets.push({
+    label: 'Недостачи',
+    data: ndstData,
+    borderColor: '#EF4444',
+    backgroundColor: '#EF444420',
+    fill: false,
+    tension: 0.3,
+    pointRadius: 0
+  });
+
+  _timelineChart = new Chart(document.getElementById('chart-timeline'), {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: datasets.length > 1,
+          labels: { color: colors.tick, font: { size: 12 }, boxWidth: 12 }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: colors.grid },
+          ticks: {
+            color: colors.tick,
+            font: { size: 11 },
+            maxTicksLimit: 10,
+            maxRotation: 0
+          }
+        },
+        y: {
+          grid: { color: colors.grid },
+          ticks: { color: colors.tick, font: { size: 11 } },
+          beginAtZero: true
+        }
+      }
+    }
+  });
+}
+
+function renderFactoriesTable(factories) {
+  const tbody = document.getElementById('factories-tbody');
+  tbody.innerHTML = '';
+
+  factories.forEach((factory, index) => {
+    const tr = document.createElement('tr');
+    tr.className = 'factory-row';
+    tr.dataset.idx = index;
+    tr.innerHTML = `
+      <td style="width:28px"><span class="toggle-icon">▶</span></td>
+      <td>${escHtml(factory.factory)}</td>
+      <td style="color:var(--muted);font-size:var(--fs-12)">${escHtml(factory.article)}</td>
+      <td class="td-count">${factory.count}</td>
+    `;
+
+    const expandTr = document.createElement('tr');
+    expandTr.className = 'expand-row';
+    tr.addEventListener('click', () => toggleExpand(tr, expandTr));
+    tbody.appendChild(tr);
+
+    const fieldEntries = Object.entries(factory.fields || {})
+      .sort((a, b) => b[1] - a[1]);
+
+    if (fieldEntries.length > 0) {
+      const pills = fieldEntries.map(([field, count]) =>
+        `<span class="field-pill">${escHtml(field)}: <span class="cnt">${count}</span></span>`
+      ).join('');
+      expandTr.innerHTML = `<td colspan="4"><div class="expand-inner">${pills}</div></td>`;
+    } else {
+      expandTr.innerHTML = '<td colspan="4"><div class="expand-inner" style="color:var(--muted);font-size:var(--fs-12)">Нет данных по полям</div></td>';
+    }
+    tbody.appendChild(expandTr);
+  });
+}
+
+function toggleExpand(mainRow, expandRow) {
+  const isOpen = expandRow.classList.contains('open');
+  expandRow.classList.toggle('open', !isOpen);
+  mainRow.classList.toggle('open', !isOpen);
+}
+
+function escHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+document.querySelectorAll('.period-tabs button').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.period-tabs button').forEach((button) => button.classList.remove('active'));
+    btn.classList.add('active');
+    _selectedDays = parseInt(btn.dataset.days, 10);
+    loadAnalytics();
+  });
+});
+
+document.getElementById('pin-select').addEventListener('change', () => loadAnalytics());
+
+loadPins();
+showState('st-idle');
+</script>
+</body>
+</html>

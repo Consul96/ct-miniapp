@@ -17,6 +17,7 @@ const HOST = (process.env.HOST || '127.0.0.1').trim();
 const PORT = Number(process.env.PORT || 3000);
 const APP_BASE_URL = (process.env.APP_BASE_URL || `http://${HOST}:${PORT}`).replace(/\/$/, '');
 const WEBAPP_URL = (process.env.WEBAPP_URL || `${APP_BASE_URL}/`).trim();
+const ANALYTICS_API_BASE_URL = (process.env.ANALYTICS_API_BASE_URL || 'http://127.0.0.1:8090').replace(/\/$/, '');
 const TELEGRAM_BOT_TOKEN = (process.env.TELEGRAM_BOT_TOKEN || '').trim();
 const GENERATED_TTL_MS = 1000 * 60 * 30;
 
@@ -353,13 +354,17 @@ async function processOrder(rawPayload, options = {}) {
   return { order, pdfBuffer, filename, emailResult };
 }
 
-async function readJsonBody(req) {
+async function readRawBody(req) {
   const chunks = [];
   for await (const chunk of req) {
     chunks.push(chunk);
   }
 
-  const raw = Buffer.concat(chunks).toString('utf8');
+  return Buffer.concat(chunks);
+}
+
+async function readJsonBody(req) {
+  const raw = (await readRawBody(req)).toString('utf8');
   if (!raw) {
     return {};
   }
@@ -387,6 +392,37 @@ function cleanupGeneratedFiles() {
 }
 
 async function handleApi(req, res, url) {
+  if (url.pathname.startsWith('/api/analytics')) {
+    try {
+      const upstreamUrl = new URL(`${ANALYTICS_API_BASE_URL}${url.pathname}${url.search}`);
+      const requestBody = req.method === 'GET' || req.method === 'HEAD'
+        ? undefined
+        : await readRawBody(req);
+
+      const upstream = await fetch(upstreamUrl, {
+        method: req.method,
+        headers: {
+          Accept: req.headers.accept || 'application/json',
+          ...(req.headers['content-type'] ? { 'Content-Type': req.headers['content-type'] } : {})
+        },
+        body: requestBody && requestBody.length ? requestBody : undefined
+      });
+
+      const responseBody = req.method === 'HEAD'
+        ? undefined
+        : Buffer.from(await upstream.arrayBuffer());
+
+      res.writeHead(upstream.status, {
+        'Content-Type': upstream.headers.get('content-type') || 'application/json; charset=utf-8',
+        'Cache-Control': upstream.headers.get('cache-control') || 'no-store'
+      });
+      res.end(responseBody);
+      return;
+    } catch (error) {
+      return sendError(res, 502, 'Не удалось получить аналитику из backend бота', error.message);
+    }
+  }
+
   if (req.method === 'GET' && url.pathname === '/api/health') {
     return json(res, 200, {
       ok: true,
@@ -445,6 +481,10 @@ async function serveStatic(req, res, url) {
   let pathname = decodeURIComponent(url.pathname);
   if (pathname === '/') {
     pathname = '/index.html';
+  } else if (pathname === '/analytics' || pathname === '/analytics/') {
+    pathname = '/analytics.html';
+  } else if (pathname === '/auth' || pathname === '/auth/') {
+    pathname = '/auth.html';
   }
 
   const filePath = path.join(__dirname, pathname);
