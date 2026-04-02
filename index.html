@@ -6,6 +6,7 @@
         content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
   <title>CT Mentor — калькулятор маркировки</title>
   <meta name="color-scheme" content="light" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
   <style>
     :root{
@@ -365,6 +366,168 @@
     .tab-panel[hidden]{
       display:none !important;
     }
+    /* ── Analytics panel ── */
+    .an-filters{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      align-items:center;
+      margin-bottom:16px;
+    }
+    .an-select{
+      appearance:none;
+      border:1.5px solid var(--stroke);
+      background:var(--field);
+      color:var(--ink);
+      border-radius:10px;
+      padding:8px 12px;
+      font:inherit;
+      font-size:14px;
+      min-width:140px;
+      cursor:pointer;
+    }
+    .an-period-btn{
+      appearance:none;
+      border:1.5px solid var(--stroke);
+      background:#fff;
+      color:var(--muted);
+      border-radius:999px;
+      padding:7px 14px;
+      font:inherit;
+      font-weight:700;
+      font-size:13px;
+      cursor:pointer;
+      transition:.15s;
+    }
+    .an-period-btn.active{
+      background:var(--brand);
+      border-color:var(--brand);
+      color:#fff;
+    }
+    .an-refresh{
+      margin-left:auto;
+      appearance:none;
+      border:1.5px solid var(--stroke);
+      background:#fff;
+      color:var(--muted);
+      border-radius:10px;
+      padding:7px 14px;
+      font:inherit;
+      font-size:13px;
+      cursor:pointer;
+      transition:.15s;
+    }
+    .an-refresh:hover{ border-color:var(--brand); color:var(--brand); }
+    .an-kpis{
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(130px,1fr));
+      gap:10px;
+      margin-bottom:16px;
+    }
+    .an-kpi{
+      background:var(--panel);
+      border:1px solid var(--stroke);
+      border-radius:14px;
+      padding:12px 14px;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    .an-kpi-label{
+      font-size:11px;
+      font-weight:700;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+    .an-kpi-value{
+      font-size:26px;
+      font-weight:900;
+      color:var(--brand-strong);
+      line-height:1;
+    }
+    .an-charts{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+      margin-bottom:16px;
+    }
+    @media(max-width:680px){
+      .an-charts{ grid-template-columns:1fr; }
+    }
+    .an-chart-box{
+      background:var(--panel);
+      border:1px solid var(--stroke);
+      border-radius:14px;
+      padding:14px;
+    }
+    .an-chart-title{
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      color:var(--muted);
+      margin-bottom:10px;
+    }
+    .an-factories-title{
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      color:var(--muted);
+      margin-bottom:8px;
+    }
+    .an-factory-row{
+      border-bottom:1px solid var(--stroke);
+      padding:10px 0;
+      cursor:pointer;
+    }
+    .an-factory-row:last-child{ border-bottom:none; }
+    .an-factory-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:8px;
+      font-size:14px;
+    }
+    .an-factory-name{ font-weight:700; }
+    .an-factory-count{ color:var(--muted); font-size:13px; }
+    .an-factory-fields{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      margin-top:8px;
+    }
+    .an-pill{
+      background:rgba(255,106,0,.1);
+      color:var(--brand-strong);
+      border-radius:999px;
+      padding:3px 10px;
+      font-size:12px;
+      font-weight:700;
+    }
+    .an-empty{
+      text-align:center;
+      color:var(--muted);
+      padding:32px 0;
+      font-size:14px;
+    }
+    .an-loading{
+      text-align:center;
+      color:var(--muted);
+      padding:32px 0;
+      font-size:14px;
+    }
+    .an-manager-tag{
+      display:inline-block;
+      background:rgba(255,106,0,.08);
+      color:var(--brand);
+      border-radius:999px;
+      padding:3px 10px;
+      font-size:12px;
+      font-weight:700;
+      margin-bottom:12px;
+    }
     .section-head{
       display:flex;
       justify-content:space-between;
@@ -688,6 +851,7 @@
     <div class="tabs">
       <button id="tabClient" class="tab-btn active" type="button">Параметры расчёта</button>
       <button id="tabManager" class="tab-btn" type="button">Тарифы менеджера</button>
+      <button id="tabAnalytics" class="tab-btn" type="button">📊 Аналитика заявок</button>
     </div>
 
     <div id="panelClient" class="tab-panel">
@@ -918,6 +1082,49 @@
   </div>
 </div>
 
+<div id="panelAnalytics" class="tab-panel" hidden>
+  <div class="wrap">
+    <div class="card">
+      <div class="header">
+        <div class="section-title" style="margin-bottom:4px">Аналитика корректировок</div>
+        <div class="section-sub">Статистика по корректировкам из 1С по выбранному ПИН</div>
+      </div>
+      <div style="padding:0 18px 18px">
+        <div class="an-filters">
+          <select id="anPinSelect" class="an-select"><option value="">— выберите ПИН —</option></select>
+          <button class="an-period-btn active" data-days="7" type="button">7 дней</button>
+          <button class="an-period-btn" data-days="30" type="button">30 дней</button>
+          <button class="an-period-btn" data-days="90" type="button">90 дней</button>
+          <button id="anRefresh" class="an-refresh" type="button">↻ Обновить</button>
+        </div>
+        <div id="anManagerTag" class="an-manager-tag" hidden></div>
+        <div id="anLoading" class="an-loading" hidden>Загрузка данных…</div>
+        <div id="anEmpty" class="an-empty" hidden>Нет данных за выбранный период</div>
+        <div id="anContent" hidden>
+          <div class="an-kpis">
+            <div class="an-kpi"><div class="an-kpi-label">Корректировок</div><div class="an-kpi-value" id="anKpiTotal">—</div></div>
+            <div class="an-kpi"><div class="an-kpi-label">Излишки</div><div class="an-kpi-value" id="anKpiSurplus">—</div></div>
+            <div class="an-kpi"><div class="an-kpi-label">Недостачи</div><div class="an-kpi-value" id="anKpiShortage">—</div></div>
+            <div class="an-kpi"><div class="an-kpi-label">Фабрик</div><div class="an-kpi-value" id="anKpiFactories">—</div></div>
+          </div>
+          <div class="an-charts">
+            <div class="an-chart-box">
+              <div class="an-chart-title">Топ полей</div>
+              <canvas id="anChartFields" height="220"></canvas>
+            </div>
+            <div class="an-chart-box">
+              <div class="an-chart-title">Динамика по дням</div>
+              <canvas id="anChartTimeseries" height="220"></canvas>
+            </div>
+          </div>
+          <div class="an-factories-title">Фабрики</div>
+          <div id="anFactories"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
   const tg = window.Telegram?.WebApp;
   const API_BASE = '/api';
@@ -1051,8 +1258,10 @@
   const managerTelegramLink = document.getElementById('managerTelegramLink');
   const tabClient = document.getElementById('tabClient');
   const tabManager = document.getElementById('tabManager');
+  const tabAnalytics = document.getElementById('tabAnalytics');
   const panelClient = document.getElementById('panelClient');
   const panelManager = document.getElementById('panelManager');
+  const panelAnalytics = document.getElementById('panelAnalytics');
   const vatSel = document.getElementById('vat');
   const curSel = document.getElementById('currency');
   const emailInput = document.getElementById('emailInput');
@@ -1089,11 +1298,13 @@
   }
 
   function setActiveTab(tab){
-    const isClient = tab === 'client';
-    panelClient.hidden = !isClient;
-    panelManager.hidden = isClient;
-    tabClient.classList.toggle('active', isClient);
-    tabManager.classList.toggle('active', !isClient);
+    panelClient.hidden = tab !== 'client';
+    panelManager.hidden = tab !== 'manager';
+    panelAnalytics.hidden = tab !== 'analytics';
+    tabClient.classList.toggle('active', tab === 'client');
+    tabManager.classList.toggle('active', tab === 'manager');
+    tabAnalytics.classList.toggle('active', tab === 'analytics');
+    if (tab === 'analytics') anInit();
   }
 
   function showRatesState(message, isError = false){
@@ -1446,6 +1657,7 @@
 
   tabClient.addEventListener('click', () => setActiveTab('client'));
   tabManager.addEventListener('click', () => setActiveTab('manager'));
+  tabAnalytics.addEventListener('click', () => setActiveTab('analytics'));
 
   btnSend.addEventListener('click', async () => {
     const questionnaire = computeQuestionnaire();
@@ -1556,6 +1768,184 @@
   hydrateEmail();
   checkApiAvailability();
   loadRates(false);
+
+  // ═══════════════════════════════════════════
+  //  ANALYTICS TAB
+  // ═══════════════════════════════════════════
+  (function(){
+    const AN = '/api/analytics';
+    let anCurrentPin = '';
+    let anCurrentDays = 7;
+    let anInitialized = false;
+    let anChartFields = null;
+    let anChartTimeseries = null;
+
+    const elPinSelect    = document.getElementById('anPinSelect');
+    const elManagerTag   = document.getElementById('anManagerTag');
+    const elLoading      = document.getElementById('anLoading');
+    const elEmpty        = document.getElementById('anEmpty');
+    const elContent      = document.getElementById('anContent');
+    const elKpiTotal     = document.getElementById('anKpiTotal');
+    const elKpiSurplus   = document.getElementById('anKpiSurplus');
+    const elKpiShortage  = document.getElementById('anKpiShortage');
+    const elKpiFactories = document.getElementById('anKpiFactories');
+    const elFactories    = document.getElementById('anFactories');
+    const elRefresh      = document.getElementById('anRefresh');
+    const periodBtns     = document.querySelectorAll('.an-period-btn');
+
+    function anSetLoading(on){
+      elLoading.hidden = !on;
+      if(on){ elEmpty.hidden = true; elContent.hidden = true; }
+    }
+
+    function anSetPeriod(days){
+      anCurrentDays = days;
+      periodBtns.forEach(b => b.classList.toggle('active', Number(b.dataset.days) === days));
+    }
+
+    periodBtns.forEach(b => b.addEventListener('click', () => {
+      anSetPeriod(Number(b.dataset.days));
+      if(anCurrentPin) anLoad(true);
+    }));
+
+    elRefresh.addEventListener('click', () => {
+      if(anCurrentPin) anLoad(true);
+    });
+
+    elPinSelect.addEventListener('change', () => {
+      anCurrentPin = elPinSelect.value;
+      if(anCurrentPin) anLoad(false);
+      else { elContent.hidden = true; elEmpty.hidden = true; elManagerTag.hidden = true; }
+    });
+
+    async function anLoadPins(){
+      try{
+        const r = await fetch(`${AN}/pins`);
+        if(!r.ok) return;
+        const pins = await r.json();
+        pins.forEach(p => {
+          const o = document.createElement('option');
+          o.value = p.pin;
+          o.textContent = p.pin + (p.manager ? ` — ${p.manager}` : '');
+          elPinSelect.appendChild(o);
+        });
+      }catch(e){ /* silent */ }
+    }
+
+    async function anLoad(invalidate){
+      if(!anCurrentPin) return;
+      anSetLoading(true);
+      try{
+        if(invalidate){
+          await fetch(`${AN}/invalidate?pin=${encodeURIComponent(anCurrentPin)}&days=${anCurrentDays}`, {method:'POST'});
+        }
+        const r = await fetch(`${AN}/pin?pin=${encodeURIComponent(anCurrentPin)}&days=${anCurrentDays}`);
+        if(!r.ok){ anSetLoading(false); elEmpty.hidden = false; return; }
+        const data = await r.json();
+        anSetLoading(false);
+        anRender(data);
+      }catch(e){
+        anSetLoading(false);
+        elEmpty.hidden = false;
+      }
+    }
+
+    function anRender(d){
+      if(!d || !d.summary){ elEmpty.hidden = false; return; }
+      const s = d.summary;
+      elKpiTotal.textContent     = s.total_corrects ?? '—';
+      elKpiSurplus.textContent   = s.surplus ?? '—';
+      elKpiShortage.textContent  = s.shortage ?? '—';
+      elKpiFactories.textContent = s.unique_factories ?? '—';
+
+      if(d.manager){
+        elManagerTag.textContent = '👤 ' + d.manager;
+        elManagerTag.hidden = false;
+      } else {
+        elManagerTag.hidden = true;
+      }
+
+      // Fields bar chart
+      const topFields = (s.top_fields || []).slice(0, 8);
+      if(anChartFields){ anChartFields.destroy(); anChartFields = null; }
+      if(topFields.length){
+        anChartFields = new Chart(document.getElementById('anChartFields'), {
+          type: 'bar',
+          data: {
+            labels: topFields.map(f => f.field),
+            datasets:[{ label:'Корректировок', data: topFields.map(f => f.count),
+              backgroundColor:'rgba(255,106,0,.75)', borderRadius:6 }]
+          },
+          options:{ indexAxis:'y', plugins:{legend:{display:false}},
+            scales:{ x:{beginAtZero:true, ticks:{precision:0}}, y:{ticks:{font:{size:11}}} } }
+        });
+      }
+
+      // Timeseries line chart
+      const ts = d.timeseries || [];
+      if(anChartTimeseries){ anChartTimeseries.destroy(); anChartTimeseries = null; }
+      if(ts.length){
+        anChartTimeseries = new Chart(document.getElementById('anChartTimeseries'), {
+          type: 'line',
+          data: {
+            labels: ts.map(p => p.date),
+            datasets:[
+              { label:'Корректировок', data: ts.map(p => p.total_corrects),
+                borderColor:'rgba(255,106,0,1)', backgroundColor:'rgba(255,106,0,.12)',
+                tension:.3, fill:true, pointRadius:3 },
+              { label:'Излишки', data: ts.map(p => p.surplus),
+                borderColor:'rgba(22,163,74,1)', backgroundColor:'transparent',
+                tension:.3, pointRadius:2, borderDash:[4,3] },
+              { label:'Недостачи', data: ts.map(p => p.shortage),
+                borderColor:'rgba(239,68,68,1)', backgroundColor:'transparent',
+                tension:.3, pointRadius:2, borderDash:[4,3] }
+            ]
+          },
+          options:{ plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},
+            scales:{ x:{ticks:{font:{size:10},maxRotation:45}}, y:{beginAtZero:true,ticks:{precision:0}} } }
+        });
+      }
+
+      // Factories table
+      elFactories.innerHTML = '';
+      const factories = d.factories || [];
+      if(factories.length){
+        factories.forEach(f => {
+          const row = document.createElement('div');
+          row.className = 'an-factory-row';
+          row.innerHTML = `
+            <div class="an-factory-head">
+              <span class="an-factory-name">${f.factory || '—'}</span>
+              <span class="an-factory-count">${f.total} корр.</span>
+            </div>`;
+          const fieldsDiv = document.createElement('div');
+          fieldsDiv.className = 'an-factory-fields';
+          fieldsDiv.hidden = true;
+          (f.top_fields || []).forEach(tf => {
+            const pill = document.createElement('span');
+            pill.className = 'an-pill';
+            pill.textContent = `${tf.field}: ${tf.count}`;
+            fieldsDiv.appendChild(pill);
+          });
+          row.appendChild(fieldsDiv);
+          row.addEventListener('click', () => { fieldsDiv.hidden = !fieldsDiv.hidden; });
+          elFactories.appendChild(row);
+        });
+      } else {
+        elFactories.innerHTML = '<div class="an-empty">Нет данных по фабрикам</div>';
+      }
+
+      elEmpty.hidden = true;
+      elContent.hidden = false;
+    }
+
+    window.anInit = function(){
+      if(!anInitialized){
+        anInitialized = true;
+        anLoadPins();
+      }
+    };
+  })();
 </script>
 </body>
 </html>
